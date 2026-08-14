@@ -1,0 +1,41 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import LanguageSwitcher from '../../../components/LanguageSwitcher.astro';
+import { getTranslations } from '../../../i18n/utils';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('humanities');
+  return entries.map((entry) => ({
+    params: { lang: entry.data.lang, slug: entry.slug.replace(/^(ko|en)\//, '') },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+const translations = await getTranslations(entry, 'humanities');
+
+const subcategoryLabel: Record<string, string> = {
+  review: '리뷰',
+  reflection: '사색',
+  fiction: '픽션',
+  nonfiction: '논픽션',
+};
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.description}>
+  <div class="post-header">
+    <span class="tag">인문학 · {subcategoryLabel[entry.data.subcategory]}</span>
+    <LanguageSwitcher
+      translations={translations}
+      currentLang={entry.data.lang}
+      collectionBasePath="/humanities/"
+    />
+  </div>
+  <h1>{entry.data.title}</h1>
+  <time>{entry.data.publishedAt.toLocaleDateString()}</time>
+  <article>
+    <Content />
+  </article>
+</BaseLayout>

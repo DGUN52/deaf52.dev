@@ -1,0 +1,67 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'ko' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+const itPosts = (await getCollection('it'))
+  .filter((p) => p.data.lang === lang && !p.data.draft)
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+
+const humanitiesPosts = (await getCollection('humanities'))
+  .filter((p) => p.data.lang === lang && !p.data.draft)
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+
+const t = lang === 'ko'
+  ? { it: 'IT기술', humanities: '인문학', empty: '아직 작성된 글이 없습니다.' }
+  : { it: 'Tech', humanities: 'Humanities', empty: 'No posts yet.' };
+---
+
+<BaseLayout title={lang === 'ko' ? 'DB와 인문학' : 'DB & Humanities'}>
+  <section>
+    <h2>{t.it}</h2>
+    {itPosts.length === 0 && <p class="empty">{t.empty}</p>}
+    <ul class="post-list">
+      {itPosts.map((post) => (
+        <li>
+          <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
+            {post.data.title}
+          </a>
+          <span class="meta">{post.data.tech.join(', ')}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section>
+    <h2>{t.humanities}</h2>
+    {humanitiesPosts.length === 0 && <p class="empty">{t.empty}</p>}
+    <ul class="post-list">
+      {humanitiesPosts.map((post) => (
+        <li>
+          <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
+            {post.data.title}
+          </a>
+          <span class="meta">{post.data.subcategory}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  section { margin-bottom: 2.5rem; }
+  h2 { border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+  .post-list { list-style: none; padding: 0; }
+  .post-list li { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #f4f4f4; }
+  .post-list a { text-decoration: none; color: inherit; font-weight: 500; }
+  .meta { color: #999; font-size: 0.85rem; }
+  .empty { color: #aaa; }
+</style>
