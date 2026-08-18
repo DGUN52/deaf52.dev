@@ -1,12 +1,10 @@
 ---
-// 사용 예:
-// <LanguageSwitcher translations={translations} currentLang={entry.data.lang} />
 import { LOCALE_LABELS, type Locale } from '../i18n/utils';
 
 interface Props {
   translations: Partial<Record<Locale, { slug: string }>>;
   currentLang: Locale;
-  collectionBasePath: string; // 예: '/it/' 또는 '/humanities/'
+  collectionBasePath: string;
 }
 
 const { translations, currentLang, collectionBasePath } = Astro.props;
@@ -39,18 +37,3 @@ const { translations, currentLang, collectionBasePath } = Astro.props;
     })}
   </ul>
 </div>
-
-<style>
-  .lang-switcher { position: relative; display: inline-block; font-size: 0.9rem; }
-  .lang-current { background: none; border: 1px solid #ddd; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
-  .lang-menu {
-    display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
-    background: white; border: 1px solid #eee; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    list-style: none; padding: 6px; min-width: 140px; z-index: 10;
-  }
-  .lang-switcher:hover .lang-menu,
-  .lang-switcher:focus-within .lang-menu { display: block; }
-  .lang-menu li { padding: 4px 8px; }
-  .lang-menu a { text-decoration: none; color: inherit; }
-  .lang-disabled { color: #aaa; }
-</style>
