@@ -64,10 +64,11 @@ const subcategoryLabel: Record<string, string> = {
     <ul class="post-list humanities">
       {humanitiesPosts.map((post) => (
         <li>
-          <span class="eyebrow">{subcategoryLabel[post.data.subcategory]}</span>
           <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
             {post.data.title}
           </a>
+          <!-- Align right like IT tags -->
+          <span class="tags">{subcategoryLabel[post.data.subcategory]}</span>
         </li>
       ))}
     </ul>

@@ -446,3 +446,72 @@ button:focus-visible {
     font-size: 1.5rem;
   }
 }
+
+/* ---------- Category Nav ---------- */
+.site-nav .nav-category {
+  background: var(--paper-deep);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 500;
+  border-bottom: none;
+}
+.site-nav .nav-category:hover {
+  background: var(--tech-soft);
+  color: var(--tech);
+}
+
+/* ---------- Humanities post list ---------- */
+/* Update existing .post-list.humanities li */
+.post-list.humanities li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px dashed var(--line);
+}
+/* Remove eyebrow styles and add tags style */
+.post-list.humanities .tags {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ---------- View Toggle UI ---------- */
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.view-toggle button {
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  transition: all 0.2s ease;
+}
+.view-toggle button.active {
+  background: var(--paper-deep);
+  color: var(--ink);
+  border-color: var(--ink);
+  font-weight: 500;
+}
+.view-section {
+  display: none;
+}
+.view-section.active {
+  display: block;
+}
+.group-title {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  margin: 2.5rem 0 1rem;
+  color: var(--ink);
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 0.5rem;
+}

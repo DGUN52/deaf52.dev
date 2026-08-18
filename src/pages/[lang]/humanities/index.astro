@@ -23,8 +23,16 @@ const subcategoryLabel: Record<string, string> = {
 };
 
 const t = lang === 'ko'
-  ? { title: '인문학', sub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.' }
-  : { title: 'Humanities', sub: 'reviews, reflections, writing', empty: 'No posts yet.' };
+  ? { title: '인문학', sub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.', latest: '최신순 보기', grouped: '소분류별 보기' }
+  : { title: 'Humanities', sub: 'reviews, reflections, writing', empty: 'No posts yet.', latest: 'Latest', grouped: 'By Category' };
+
+// Group posts by subcategory
+const groupedPosts = new Map<string, typeof posts>();
+posts.forEach(p => {
+  const sub = p.data.subcategory;
+  if (!groupedPosts.has(sub)) groupedPosts.set(sub, []);
+  groupedPosts.get(sub)!.push(p);
+});
 ---
 
 <BaseLayout title={t.title}>
@@ -35,14 +43,67 @@ const t = lang === 'ko'
   <p class="section-sub">{t.sub} &middot; {posts.length}{lang === 'ko' ? '개 글' : ' posts'}</p>
 
   {posts.length === 0 && <p class="empty-state">{t.empty}</p>}
-  <ul class="post-list humanities">
-    {posts.map((post) => (
-      <li>
-        <span class="eyebrow">{subcategoryLabel[post.data.subcategory]}</span>
-        <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
-          {post.data.title}
-        </a>
-      </li>
-    ))}
-  </ul>
+
+  {posts.length > 0 && (
+    <>
+      <div class="view-toggle">
+        <button id="btn-latest">{t.latest}</button>
+        <!-- Humanities default: Grouped view -->
+        <button id="btn-grouped" class="active">{t.grouped}</button>
+      </div>
+
+      <div id="view-latest" class="view-section">
+        <ul class="post-list humanities">
+          {posts.map((post) => (
+            <li>
+              <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
+                {post.data.title}
+              </a>
+              <span class="tags">{subcategoryLabel[post.data.subcategory]}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div id="view-grouped" class="view-section active">
+        {[...groupedPosts.entries()].map(([sub, subPosts]) => (
+          <div>
+            <h3 class="group-title">{subcategoryLabel[sub]}</h3>
+            <ul class="post-list humanities">
+              {subPosts.map((post) => (
+                <li>
+                  <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
+                    {post.data.title}
+                  </a>
+                  <span class="tags">{post.data.publishedAt.toLocaleDateString()}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </>
+  )}
 </BaseLayout>
+
+<script>
+  // Setup toggle events
+  const btnLatest = document.getElementById('btn-latest');
+  const btnGrouped = document.getElementById('btn-grouped');
+  const viewLatest = document.getElementById('view-latest');
+  const viewGrouped = document.getElementById('view-grouped');
+
+  btnLatest?.addEventListener('click', () => {
+    btnLatest.classList.add('active');
+    btnGrouped?.classList.remove('active');
+    viewLatest?.classList.add('active');
+    viewGrouped?.classList.remove('active');
+  });
+
+  btnGrouped?.addEventListener('click', () => {
+    btnGrouped.classList.add('active');
+    btnLatest?.classList.remove('active');
+    viewGrouped?.classList.add('active');
+    viewLatest?.classList.remove('active');
+  });
+</script>
