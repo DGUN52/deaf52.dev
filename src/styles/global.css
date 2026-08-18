@@ -124,6 +124,15 @@ button:focus-visible {
   font-weight: 600;
 }
 
+.section-heading h2 a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.section-heading h2 a:hover {
+  text-decoration: underline;
+}
+
 .section-sub {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -206,6 +215,29 @@ button:focus-visible {
 
 .post-list.humanities a:hover {
   color: var(--human);
+}
+
+/* ---------- Tech filter chips (IT index) ---------- */
+.tech-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.tech-chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--tech-soft);
+  color: var(--tech);
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+}
+
+.tech-chip em {
+  font-style: normal;
+  opacity: 0.65;
+  margin-left: 0.2rem;
 }
 
 .empty-state {
