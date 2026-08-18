@@ -1,0 +1,48 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'ko' } },
+    { params: { lang: 'en' } },
+  ];
+}
+
+const { lang } = Astro.params;
+
+const posts = (await getCollection('humanities'))
+  .filter((p) => p.data.lang === lang && !p.data.draft)
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+
+const subcategoryLabel: Record<string, string> = {
+  review: lang === 'ko' ? '리뷰' : 'review',
+  reflection: lang === 'ko' ? '사색' : 'reflection',
+  fiction: lang === 'ko' ? '픽션' : 'fiction',
+  nonfiction: lang === 'ko' ? '논픽션' : 'nonfiction',
+};
+
+const t = lang === 'ko'
+  ? { title: '인문학', sub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.' }
+  : { title: 'Humanities', sub: 'reviews, reflections, writing', empty: 'No posts yet.' };
+---
+
+<BaseLayout title={t.title}>
+  <div class="section-heading humanities">
+    <span class="marker">02</span>
+    <h2>{t.title}</h2>
+  </div>
+  <p class="section-sub">{t.sub} &middot; {posts.length}{lang === 'ko' ? '개 글' : ' posts'}</p>
+
+  {posts.length === 0 && <p class="empty-state">{t.empty}</p>}
+  <ul class="post-list humanities">
+    {posts.map((post) => (
+      <li>
+        <span class="eyebrow">{subcategoryLabel[post.data.subcategory]}</span>
+        <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
+          {post.data.title}
+        </a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
