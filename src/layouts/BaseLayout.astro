@@ -36,8 +36,9 @@ const currentLang: 'ko' | 'en' = currentPath.startsWith('/en') ? 'en' : 'ko';
     </a>
     <nav class="site-nav">
       <HeaderLangSwitcher currentLang={currentLang} currentPath={currentPath} />
-      <a href={`/${currentLang}/it/`}>IT기술</a>
-      <a href={`/${currentLang}/humanities/`}>인문학</a>
+      <!-- Add nav-category class -->
+      <a href={`/${currentLang}/it/`} class="nav-category">IT기술</a>
+      <a href={`/${currentLang}/humanities/`} class="nav-category">인문학</a>
     </nav>
   </header>
   <main class="page-shell">

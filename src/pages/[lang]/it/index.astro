@@ -15,15 +15,18 @@ const posts = (await getCollection('it'))
   .filter((p) => p.data.lang === lang && !p.data.draft)
   .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 
-// tech 태그별로 묶어서 몇 개 있는지 보여주기
-const techCounts = new Map<string, number>();
-posts.forEach((p) => {
-  p.data.tech.forEach((t) => techCounts.set(t, (techCounts.get(t) ?? 0) + 1));
-});
-
 const t = lang === 'ko'
-  ? { title: 'IT기술', sub: '기술별 기록', empty: '아직 작성된 글이 없습니다.' }
-  : { title: 'Tech', sub: 'notes by technology', empty: 'No posts yet.' };
+  ? { title: 'IT기술', sub: '기술별 기록', empty: '아직 작성된 글이 없습니다.', latest: '최신순 보기', grouped: '기술별 보기' }
+  : { title: 'Tech', sub: 'notes by technology', empty: 'No posts yet.', latest: 'Latest', grouped: 'By Technology' };
+
+// Group posts by tech tags
+const groupedPosts = new Map<string, typeof posts>();
+posts.forEach(p => {
+  p.data.tech.forEach(t => {
+    if (!groupedPosts.has(t)) groupedPosts.set(t, []);
+    groupedPosts.get(t)!.push(p);
+  });
+});
 ---
 
 <BaseLayout title={t.title}>
@@ -33,24 +36,70 @@ const t = lang === 'ko'
   </div>
   <p class="section-sub">{t.sub} &middot; {posts.length}{lang === 'ko' ? '개 글' : ' posts'}</p>
 
-  {techCounts.size > 0 && (
-    <div class="tech-filter">
-      {[...techCounts.entries()].map(([tech, count]) => (
-        <span class="tech-chip">{tech} <em>{count}</em></span>
-      ))}
-    </div>
-  )}
-
   {posts.length === 0 && <p class="empty-state">{t.empty}</p>}
-  <ul class="post-list it">
-    {posts.map((post, i) => (
-      <li>
-        <span class="index">{String(i + 1).padStart(2, '0')}</span>
-        <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
-          {post.data.title}
-        </a>
-        <span class="tags">{post.data.tech.join(' / ')}</span>
-      </li>
-    ))}
-  </ul>
+
+  {posts.length > 0 && (
+    <>
+      <div class="view-toggle">
+        <!-- IT default: Latest view -->
+        <button id="btn-latest" class="active">{t.latest}</button>
+        <button id="btn-grouped">{t.grouped}</button>
+      </div>
+
+      <div id="view-latest" class="view-section active">
+        <ul class="post-list it">
+          {posts.map((post, i) => (
+            <li>
+              <span class="index">{String(i + 1).padStart(2, '0')}</span>
+              <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
+                {post.data.title}
+              </a>
+              <span class="tags">{post.data.tech.join(' / ')}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div id="view-grouped" class="view-section">
+        {[...groupedPosts.entries()].map(([tech, techPosts]) => (
+          <div>
+            <h3 class="group-title">{tech}</h3>
+            <ul class="post-list it">
+              {techPosts.map((post, i) => (
+                <li>
+                  <span class="index">{String(i + 1).padStart(2, '0')}</span>
+                  <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
+                    {post.data.title}
+                  </a>
+                  <span class="tags">{post.data.publishedAt.toLocaleDateString()}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </>
+  )}
 </BaseLayout>
+
+<script>
+  // Setup toggle events
+  const btnLatest = document.getElementById('btn-latest');
+  const btnGrouped = document.getElementById('btn-grouped');
+  const viewLatest = document.getElementById('view-latest');
+  const viewGrouped = document.getElementById('view-grouped');
+
+  btnLatest?.addEventListener('click', () => {
+    btnLatest.classList.add('active');
+    btnGrouped?.classList.remove('active');
+    viewLatest?.classList.add('active');
+    viewGrouped?.classList.remove('active');
+  });
+
+  btnGrouped?.addEventListener('click', () => {
+    btnGrouped.classList.add('active');
+    btnLatest?.classList.remove('active');
+    viewGrouped?.classList.add('active');
+    viewLatest?.classList.remove('active');
+  });
+</script>
