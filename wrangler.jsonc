@@ -1,0 +1,8 @@
+{
+  "name": "deaf52-dev",
+  "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
+
