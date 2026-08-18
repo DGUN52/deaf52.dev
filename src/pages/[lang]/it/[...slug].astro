@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import LanguageSwitcher from '../../../components/LanguageSwitcher.astro';
-import { getTranslations, LOCALES } from '../../../i18n/utils';
+import { getTranslations } from '../../../i18n/utils';
 
 export async function getStaticPaths() {
   const entries = await getCollection('it');
@@ -18,17 +18,17 @@ const translations = await getTranslations(entry, 'it');
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.description}>
-  <div class="post-header">
-    <span class="tag">IT기술 · {entry.data.tech.join(', ')}</span>
+  <div class="post-meta-bar">
+    <span class="post-tag it">IT · {entry.data.tech.join(', ')}</span>
     <LanguageSwitcher
       translations={translations}
       currentLang={entry.data.lang}
       collectionBasePath="/it/"
     />
   </div>
-  <h1>{entry.data.title}</h1>
-  <time>{entry.data.publishedAt.toLocaleDateString()}</time>
-  <article>
+  <h1 class="post-title">{entry.data.title}</h1>
+  <time class="post-date">{entry.data.publishedAt.toLocaleDateString()}</time>
+  <article class="post-body">
     <Content />
   </article>
 </BaseLayout>

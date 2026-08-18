@@ -20,48 +20,56 @@ const humanitiesPosts = (await getCollection('humanities'))
   .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 
 const t = lang === 'ko'
-  ? { it: 'IT기술', humanities: '인문학', empty: '아직 작성된 글이 없습니다.' }
-  : { it: 'Tech', humanities: 'Humanities', empty: 'No posts yet.' };
+  ? { it: 'IT기술', itSub: '기술별 기록', humanities: '인문학', humanitiesSub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.' }
+  : { it: 'Tech', itSub: 'notes by technology', humanities: 'Humanities', humanitiesSub: 'reviews, reflections, writing', empty: 'No posts yet.' };
+
+const subcategoryLabel: Record<string, string> = {
+  review: lang === 'ko' ? '리뷰' : 'review',
+  reflection: lang === 'ko' ? '사색' : 'reflection',
+  fiction: lang === 'ko' ? '픽션' : 'fiction',
+  nonfiction: lang === 'ko' ? '논픽션' : 'nonfiction',
+};
 ---
 
 <BaseLayout title={lang === 'ko' ? 'DB와 인문학' : 'DB & Humanities'}>
   <section>
-    <h2>{t.it}</h2>
-    {itPosts.length === 0 && <p class="empty">{t.empty}</p>}
-    <ul class="post-list">
-      {itPosts.map((post) => (
+    <div class="section-heading it">
+      <span class="marker">01</span>
+      <h2>{t.it}</h2>
+    </div>
+    <p class="section-sub">{t.itSub}</p>
+
+    {itPosts.length === 0 && <p class="empty-state">{t.empty}</p>}
+    <ul class="post-list it">
+      {itPosts.map((post, i) => (
         <li>
+          <span class="index">{String(i + 1).padStart(2, '0')}</span>
           <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
             {post.data.title}
           </a>
-          <span class="meta">{post.data.tech.join(', ')}</span>
+          <span class="tags">{post.data.tech.join(' / ')}</span>
         </li>
       ))}
     </ul>
   </section>
 
   <section>
-    <h2>{t.humanities}</h2>
-    {humanitiesPosts.length === 0 && <p class="empty">{t.empty}</p>}
-    <ul class="post-list">
+    <div class="section-heading humanities">
+      <span class="marker">02</span>
+      <h2>{t.humanities}</h2>
+    </div>
+    <p class="section-sub">{t.humanitiesSub}</p>
+
+    {humanitiesPosts.length === 0 && <p class="empty-state">{t.empty}</p>}
+    <ul class="post-list humanities">
       {humanitiesPosts.map((post) => (
         <li>
+          <span class="eyebrow">{subcategoryLabel[post.data.subcategory]}</span>
           <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
             {post.data.title}
           </a>
-          <span class="meta">{post.data.subcategory}</span>
         </li>
       ))}
     </ul>
   </section>
 </BaseLayout>
-
-<style>
-  section { margin-bottom: 2.5rem; }
-  h2 { border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-  .post-list { list-style: none; padding: 0; }
-  .post-list li { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #f4f4f4; }
-  .post-list a { text-decoration: none; color: inherit; font-weight: 500; }
-  .meta { color: #999; font-size: 0.85rem; }
-  .empty { color: #aaa; }
-</style>

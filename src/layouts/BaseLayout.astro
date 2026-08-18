@@ -1,4 +1,6 @@
 ---
+import '../styles/global.css';
+
 interface Props {
   title: string;
   description?: string;
@@ -12,19 +14,28 @@ const { title, description = 'DB와 인문학' } = Astro.props;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title} · DB와 인문학</title>
   <meta name="description" content={description} />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
 </head>
 <body>
-  <header>
+  <header class="site-header">
     <a href="/" class="site-title">DB와 인문학</a>
-    <nav>
+    <nav class="site-nav">
       <a href="/ko/it/">IT기술</a>
       <a href="/ko/humanities/">인문학</a>
     </nav>
   </header>
-  <main>
+  <main class="page-shell">
     <slot />
   </main>
-  <footer>
+  <footer class="site-footer">
     <p>&copy; 2026 deaf52.dev</p>
   </footer>
 </body>
