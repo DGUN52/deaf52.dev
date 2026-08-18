@@ -1,18 +1,22 @@
 ---
 import '../styles/global.css';
+import HeaderLangSwitcher from '../components/HeaderLangSwitcher.astro';
 
 interface Props {
   title: string;
   description?: string;
 }
-const { title, description = 'DB와 인문학' } = Astro.props;
+const { title, description = 'deaf52 · IT & humanities' } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+const currentLang: 'ko' | 'en' = currentPath.startsWith('/en') ? 'en' : 'ko';
 ---
 <!doctype html>
-<html lang="ko">
+<html lang={currentLang}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{title} · DB와 인문학</title>
+  <title>{title} · deaf52</title>
   <meta name="description" content={description} />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link
@@ -26,17 +30,21 @@ const { title, description = 'DB와 인문학' } = Astro.props;
 </head>
 <body>
   <header class="site-header">
-    <a href="/" class="site-title">DB와 인문학</a>
+    <a href="/" class="site-title-group">
+      <span class="site-title">deaf52</span>
+      <span class="site-subtitle">IT &amp; humanities</span>
+    </a>
     <nav class="site-nav">
-      <a href="/ko/it/">IT기술</a>
-      <a href="/ko/humanities/">인문학</a>
+      <HeaderLangSwitcher currentLang={currentLang} currentPath={currentPath} />
+      <a href={`/${currentLang}/it/`}>IT기술</a>
+      <a href={`/${currentLang}/humanities/`}>인문학</a>
     </nav>
   </header>
   <main class="page-shell">
     <slot />
   </main>
   <footer class="site-footer">
-    <p>&copy; 2026 deaf52.dev</p>
+    <p>&copy; 2026 deaf52.dev &middot; <a href="mailto:eorms96@naver.com">eorms96@naver.com</a></p>
   </footer>
 </body>
 </html>
