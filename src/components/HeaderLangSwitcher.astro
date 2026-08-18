@@ -1,0 +1,34 @@
+---
+interface Props {
+  currentLang: 'ko' | 'en';
+  currentPath: string; // e.g. /ko/it/docker-internals
+}
+
+const { currentLang, currentPath } = Astro.props;
+
+// /ko/... <-> /en/... 로 prefix만 교체
+function swapLang(path: string, target: 'ko' | 'en') {
+  const rest = path.replace(/^\/(ko|en)/, '');
+  return `/${target}${rest || '/'}`;
+}
+
+const langs: Array<{ code: 'ko' | 'en'; flag: string; label: string }> = [
+  { code: 'ko', flag: '🇰🇷', label: 'KO' },
+  { code: 'en', flag: '🇺🇸', label: 'EN' },
+];
+---
+
+<div class="lang-box-group">
+  <span class="lang-label">lang</span>
+  {langs.map((l) => (
+    <a
+      href={swapLang(currentPath, l.code)}
+      class="lang-box"
+      class:list={[{ active: l.code === currentLang }]}
+      aria-current={l.code === currentLang ? 'true' : undefined}
+      title={l.label}
+    >
+      <span class="flag" aria-hidden="true">{l.flag}</span>
+    </a>
+  ))}
+</div>
