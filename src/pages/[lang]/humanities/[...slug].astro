@@ -1,12 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { getTranslations } from '../../../i18n/utils';
+import { getTranslations, LOCALE_PREFIX_RE } from '../../../i18n/utils';
 
 export async function getStaticPaths() {
   const entries = await getCollection('humanities');
   return entries.map((entry) => ({
-    params: { lang: entry.data.lang, slug: entry.slug.replace(/^(ko|en)\//, '') },
+    params: { lang: entry.data.lang, slug: entry.slug.replace(LOCALE_PREFIX_RE, '') },
     props: { entry },
   }));
 }
