@@ -407,20 +407,19 @@ button:focus-visible {
 }
 
 .post-list.humanities li {
-  padding: 1.1rem 0;
-  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px dashed var(--line);
 }
 
-.post-list.humanities .eyebrow {
-  display: block;
+.post-list.humanities .tags {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--human);
-  margin-bottom: 0.3rem;
-}
-
-.post-list.humanities .eyebrow::before {
-  content: "§ ";
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
 }
 
 .post-list.humanities a {
@@ -515,7 +514,90 @@ button:focus-visible {
   margin: 0 0 1.2rem;
 }
 
-/* ---------- Language switcher ---------- */
+/* ---------- Inline code ---------- */
+.post-body :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--tech-soft);
+  color: var(--tech);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+/* ---------- Code blocks ---------- */
+.post-body pre {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  background: var(--ink);
+  color: #e8e2d0;
+  padding: 1.1rem 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0 0 1.5rem;
+  -webkit-overflow-scrolling: touch;
+  background-image:
+    linear-gradient(var(--ink), var(--ink)),
+    linear-gradient(var(--ink), var(--ink)),
+    linear-gradient(to right, rgba(0,0,0,0.35), rgba(0,0,0,0)),
+    linear-gradient(to left, rgba(0,0,0,0.35), rgba(0,0,0,0));
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 20px 100%, 20px 100%, 20px 100%, 20px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.post-body pre code {
+  font-family: inherit;
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  white-space: pre;
+}
+
+.post-body blockquote {
+  margin: 0 0 1.5rem;
+  padding: 0.2rem 1.1rem;
+  border-left: 3px solid var(--human);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.post-body ul,
+.post-body ol {
+  margin: 0 0 1.2rem;
+  padding-left: 1.4rem;
+}
+
+.post-body li {
+  margin-bottom: 0.4rem;
+}
+
+.post-body h2,
+.post-body h3 {
+  font-family: var(--font-serif);
+  margin: 2rem 0 1rem;
+}
+
+.post-body img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+
+.post-body a {
+  color: var(--tech);
+  text-decoration-color: var(--line);
+  text-underline-offset: 2px;
+}
+
+.post-body a:hover {
+  text-decoration-color: var(--tech);
+}
+
+/* ---------- Language switcher (post-level, legacy) ---------- */
 .lang-switcher {
   position: relative;
   display: inline-block;
@@ -593,19 +675,7 @@ button:focus-visible {
   text-decoration-color: var(--tech);
 }
 
-@media (max-width: 560px) {
-  .post-list.it li {
-    grid-template-columns: 2rem 1fr;
-  }
-  .post-list.it .tags {
-    grid-column: 2 / -1;
-    white-space: normal;
-  }
-  .post-title {
-    font-size: 1.5rem;
-  }
-}
-
+/* ---------- Nav category (hover indicator) ---------- */
 .site-nav .nav-category {
   position: relative;
   display: inline-flex;
@@ -615,7 +685,7 @@ button:focus-visible {
   border-radius: 999px;
   font-weight: 500;
   border-bottom: none;
-  overflow: hidden; /* 슬라이드 애니메이션 영역 제한 */
+  overflow: hidden;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -624,7 +694,6 @@ button:focus-visible {
   color: var(--tech);
 }
 
-/* 3개 가로선 컨테이너 */
 .site-nav .nav-category .sub-indicator {
   position: absolute;
   bottom: 3px;
@@ -637,18 +706,16 @@ button:focus-visible {
   transition: opacity 0.2s ease;
 }
 
-/* 각 가로선 아이콘 조각 */
 .site-nav .nav-category .sub-indicator span {
   display: block;
   width: 6px;
   height: 2px;
   background-color: var(--tech);
   border-radius: 1px;
-  transform: translateY(6px); /* 아래에서 위로 슬라이드 인 준비 */
+  transform: translateY(6px);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Hover 시 슬라이드 인 애니메이션 */
 .site-nav .nav-category:hover .sub-indicator {
   opacity: 1;
 }
@@ -657,7 +724,6 @@ button:focus-visible {
   transform: translateY(0);
 }
 
-/* 각 선마다 시차(delay) 부여 */
 .site-nav .nav-category:hover .sub-indicator span:nth-child(1) {
   transition-delay: 0.02s;
 }
@@ -666,24 +732,6 @@ button:focus-visible {
 }
 .site-nav .nav-category:hover .sub-indicator span:nth-child(3) {
   transition-delay: 0.1s;
-}
-
-/* ---------- Humanities post list ---------- */
-/* Update existing .post-list.humanities li */
-.post-list.humanities li {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 0.8rem 0;
-  border-bottom: 1px dashed var(--line);
-}
-/* Remove eyebrow styles and add tags style */
-.post-list.humanities .tags {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--ink-soft);
-  white-space: nowrap;
 }
 
 /* ---------- View Toggle UI ---------- */
@@ -722,4 +770,17 @@ button:focus-visible {
   color: var(--ink);
   border-bottom: 2px solid var(--line);
   padding-bottom: 0.5rem;
+}
+
+@media (max-width: 560px) {
+  .post-list.it li {
+    grid-template-columns: 2rem 1fr;
+  }
+  .post-list.it .tags {
+    grid-column: 2 / -1;
+    white-space: normal;
+  }
+  .post-title {
+    font-size: 1.5rem;
+  }
 }

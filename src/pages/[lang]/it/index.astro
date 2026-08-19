@@ -1,19 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { LOCALES, LOCALE_PREFIX_RE } from '../../../i18n/utils';
 
 export function getStaticPaths() {
-  return [
-    { params: { lang: 'ko' } },
-    { params: { lang: 'en' } },
-    { params: { lang: 'ja' } },
-    { params: { lang: 'zh' } },
-    { params: { lang: 'in' } },
-    { params: { lang: 'de' } },
-    { params: { lang: 'uk' } },
-    { params: { lang: 'il' } },
-    { params: { lang: 'tw' } },
-  ];
+  return LOCALES.map((lang) => ({ params: { lang } }));
 }
 const { lang } = Astro.params;
 
@@ -57,7 +48,7 @@ posts.forEach(p => {
           {posts.map((post, i) => (
             <li>
               <span class="index">{String(i + 1).padStart(2, '0')}</span>
-              <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
+              <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                 {post.data.title}
               </a>
               <span class="tags">{post.data.tech.join(' / ')}</span>
@@ -74,7 +65,7 @@ posts.forEach(p => {
               {techPosts.map((post, i) => (
                 <li>
                   <span class="index">{String(i + 1).padStart(2, '0')}</span>
-                  <a href={`/${lang}/it/${post.slug.replace(/^(ko|en)\//, '')}`}>
+                  <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                     {post.data.title}
                   </a>
                   <span class="tags">{post.data.publishedAt.toLocaleDateString()}</span>

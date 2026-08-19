@@ -4,7 +4,7 @@ import { defineCollection, z } from 'astro:content';
 const baseSchema = z.object({
   title: z.string(),
   description: z.string(),
-  lang: z.enum(['ko', 'en']),
+  lang: z.enum(['ko', 'en', 'ja', 'zh', 'in', 'de', 'uk', 'il', 'tw']),
   // 같은 글의 다른 언어 버전을 연결하는 키 (예: "docker-internals")
   // 이 값이 같으면 언어 선택 UI에서 서로 연결됨
   translationKey: z.string(),

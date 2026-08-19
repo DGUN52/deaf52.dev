@@ -1,19 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { LOCALES, LOCALE_PREFIX_RE } from '../../../i18n/utils';
 
 export function getStaticPaths() {
-  return [
-    { params: { lang: 'ko' } },
-    { params: { lang: 'en' } },
-    { params: { lang: 'ja' } },
-    { params: { lang: 'zh' } },
-    { params: { lang: 'in' } },
-    { params: { lang: 'de' } },
-    { params: { lang: 'uk' } },
-    { params: { lang: 'il' } },
-    { params: { lang: 'tw' } },
-  ];
+  return LOCALES.map((lang) => ({ params: { lang } }));
 }
 
 const { lang } = Astro.params;
@@ -63,7 +54,7 @@ posts.forEach(p => {
         <ul class="post-list humanities">
           {posts.map((post) => (
             <li>
-              <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
+              <a href={`/${lang}/humanities/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                 {post.data.title}
               </a>
               <span class="tags">{subcategoryLabel[post.data.subcategory]}</span>
@@ -79,7 +70,7 @@ posts.forEach(p => {
             <ul class="post-list humanities">
               {subPosts.map((post) => (
                 <li>
-                  <a href={`/${lang}/humanities/${post.slug.replace(/^(ko|en)\//, '')}`}>
+                  <a href={`/${lang}/humanities/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                     {post.data.title}
                   </a>
                   <span class="tags">{post.data.publishedAt.toLocaleDateString()}</span>
