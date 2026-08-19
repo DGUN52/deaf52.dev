@@ -36,27 +36,31 @@ const currentLang: 'ko' | 'en' = currentPath.startsWith('/en') ? 'en' : 'ko';
     </a>
     <nav class="site-nav">
       <HeaderLangSwitcher currentLang={currentLang} currentPath={currentPath} />
-      
-      <a href={`/${currentLang}/it/`} class="nav-category">
-        IT기술
-        <span class="sub-indicator" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </span>
-      </a>
-    
-      <a href={`/${currentLang}/humanities/`} class="nav-category">
-        인문학
-        <span class="sub-indicator" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </span>
-      </a>
+      <span class="nav-label">menu</span>
+      <a href={`/${currentLang}/it/`}>IT기술</a>
+      <a href={`/${currentLang}/humanities/`}>인문학</a>
     </nav>
   </header>
   <main class="page-shell">
     <slot />
   </main>
   <footer class="site-footer">
-    <p>&copy; 2026 deaf52.dev &middot; <a href="mailto:eorms96@naver.com">eorms96@naver.com</a></p>
+    <p>
+      &copy; 2026 deaf52.dev &middot; <a href="mailto:eorms96@naver.com">eorms96@naver.com</a>
+      &middot; <span id="site-visit-counter">방문자수 불러오는 중...</span>
+    </p>
   </footer>
+  <script>
+    fetch('/api/counter/site')
+      .then((res) => res.json())
+      .then((data) => {
+        const el = document.getElementById('site-visit-counter');
+        if (el) el.textContent = `누적 방문 ${data.count.toLocaleString()}`;
+      })
+      .catch(() => {
+        const el = document.getElementById('site-visit-counter');
+        if (el) el.textContent = '';
+      });
+  </script>
 </body>
 </html>
