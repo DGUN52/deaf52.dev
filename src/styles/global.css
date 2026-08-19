@@ -498,12 +498,26 @@ button:focus-visible {
   margin: 0 0 0.5rem;
 }
 
+.post-date-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
 .post-date {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--ink-soft);
-  display: block;
-  margin-bottom: 2rem;
+}
+
+.post-views {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  padding: 0.15rem 0.5rem;
+  background: var(--paper-deep);
+  border-radius: 999px;
 }
 
 .post-body {

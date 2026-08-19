@@ -20,8 +20,26 @@ const { Content } = await entry.render();
     <span class="post-tag it">IT · {entry.data.tech.join(', ')}</span>
   </div>
   <h1 class="post-title">{entry.data.title}</h1>
-  <time class="post-date">{entry.data.publishedAt.toLocaleDateString()}</time>
+  <div class="post-date-row">
+    <time class="post-date">{entry.data.publishedAt.toLocaleDateString()}</time>
+    <span class="post-views" data-slug={entry.slug.replace(LOCALE_PREFIX_RE, '')}>조회수 불러오는 중...</span>
+  </div>
   <article class="post-body">
     <Content />
   </article>
 </BaseLayout>
+
+<script>
+  const el = document.querySelector('.post-views');
+  if (el) {
+    const slug = el.getAttribute('data-slug');
+    fetch(`/api/counter/post?slug=${encodeURIComponent(slug ?? '')}`)
+      .then((res) => res.json())
+      .then((data) => {
+        el.textContent = `조회 ${data.count.toLocaleString()}`;
+      })
+      .catch(() => {
+        el.textContent = '';
+      });
+  }
+</script>

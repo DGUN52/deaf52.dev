@@ -1,20 +1,31 @@
-# deaf52.dev — DB와 인문학
+# deaf52.dev — deaf52 · IT & humanities
 
-## 구조
+## 프로젝트 구조
+
+이 사이트는 두 개의 저장소로 나뉘어 있습니다.
+
+- **`main`** (이 레포): Astro 코드, 레이아웃, 컴포넌트, Cloudflare Worker — Public
+- **`content`**: 실제 글 콘텐츠(`it/`, `humanities/`) — Private, 빌드 시점에 clone되어 합쳐짐
 
 ```
-src/content/
-  it/            # 대분류: IT기술
-    ko/*.md
-    en/*.md
-  humanities/    # 대분류: 인문학
-    ko/*.md
-    en/*.md
+content 레포/
+  it/
+    ko/*.md   en/*.md   ja/*.md   ...
+  humanities/
+    ko/*.md   en/*.md   ja/*.md   ...
 ```
 
-- 같은 글의 다른 언어 버전은 frontmatter의 `translationKey` 값을 동일하게 맞추면
-  `LanguageSwitcher` 컴포넌트가 자동으로 연결합니다.
-- 번역이 아직 없는 언어는 "준비중"으로 표시되고 링크가 비활성화됩니다 (MongoDB 공식문서 방식과 동일).
+## 지원 언어
+
+`ko`(기본), `en`, `ja`, `zh`, `in`, `de`, `uk`, `il`, `tw` — 총 9개 언어.
+언어 목록은 `src/i18n/utils.ts`의 `LOCALES` 배열 하나로 관리되며, `astro.config.mjs`의 `i18n.locales`와 `src/content/config.ts`의 `lang` enum도 동일하게 맞춰야 합니다.
+
+같은 글의 다른 언어 버전은 frontmatter의 `translationKey` 값을 동일하게 맞추면 서로 연결됩니다 (`src/i18n/utils.ts`의 `getTranslations()`). 헤더의 국기 박스(`HeaderLangSwitcher`)로 언어를 전환할 수 있습니다.
+
+## 카테고리 구조
+
+- **IT기술** (`it`): 자유 태그(`tech: []`), 카테고리 페이지에서 "최신순" 기본 보기, 기술별 그룹 보기 지원
+- **인문학** (`humanities`): 고정 소분류(`subcategory: review | reflection | fiction | nonfiction`), 카테고리 페이지에서 "소분류별" 기본 보기, 최신순 보기 지원
 
 ## 로컬 실행
 
@@ -23,25 +34,34 @@ npm install
 npm run dev
 ```
 
-## Cloudflare Pages 배포
+콘텐츠 레포의 글을 로컬에서 보려면 `src/content/it/`, `src/content/humanities/` 안에 content 레포의 `it/`, `humanities/` 폴더 내용을 복사해 넣어야 합니다 (배포 시엔 빌드 스크립트가 자동으로 처리).
 
-1. GitHub에 이 프로젝트 push
-2. Cloudflare 대시보드 → Workers & Pages → Create → Pages → Connect to Git
-3. Build command: `npm run build`, Output directory: `dist`
-4. 배포 완료 후 Custom domains 탭에서 `deaf52.dev` 연결
-   (이미 Cloudflare에서 도메인을 구매했으므로 DNS가 같은 계정 안에 있어 CNAME이 자동으로 붙습니다)
+## 배포 (Cloudflare)
 
-## 벨로그 마이그레이션 체크리스트
+이 프로젝트는 Cloudflare Workers(정적 assets + API)로 배포됩니다.
 
-- [ ] 벨로그 글 목록/본문을 GraphQL API로 긁어서 마크다운으로 변환 (스크립트 필요)
-- [ ] 각 글을 `it/ko/` 또는 `humanities/ko/`로 분류하며 frontmatter 채우기
-- [ ] 벨로그 CDN 이미지 다운로드 → `public/images/`로 이전 후 경로 치환
-  (벨로그 서비스가 바뀌거나 종료되면 이미지가 깨지는 것을 방지)
-- [ ] 예전 벨로그 글 URL → 새 도메인 글 URL 301 리다이렉트 매핑 작성
-  (SEO 순위 보존용, Cloudflare Pages `_redirects` 파일에 규칙 추가)
+- **Build command**:
+  ```
+  git clone https://x-access-token:$CONTENT_REPO_TOKEN@github.com/DGUN52/deaf52.dev-content.git tmp-content && cp -r tmp-content/it src/content/it && cp -r tmp-content/humanities src/content/humanities && npm run build
+  ```
+  (`CONTENT_REPO_TOKEN`은 Cloudflare Pages 설정의 Secret 환경변수로 등록된 GitHub Fine-grained token, content 레포에 대한 Contents: Read-only 권한)
+- **Deploy command**: `npx wrangler deploy`
+- `wrangler.jsonc`에 정적 파일(`dist/`)을 Worker의 assets로 서빙하도록 설정되어 있고, 방문자/글별 카운터 API(`worker/index.js`)가 같이 배포됩니다.
 
-## 다음 단계 (선택)
+## 방문자 카운터
+
+Cloudflare KV(`COUNTERS` 네임스페이스)를 이용해 사이트 전체 방문자 수와 글별 조회수를 기록합니다.
+
+- `GET /api/counter/site` — 사이트 전체 카운트 +1
+- `GET /api/counter/post?slug=xxx` — 해당 글 카운트 +1
+
+## 콘텐츠 작업 도구
+
+- **벨로그 마이그레이션**: 벨로그 GraphQL API로 글을 긁어와 마크다운으로 변환하는 스크립트 (별도 관리)
+- **자동 번역**: `translate/translate.mjs` — Gemini API로 한국어 글을 8개 언어로 자동 번역해 content 레포에 채워 넣음. 사용법은 `translate/README.md` 참고.
+
+## 다음 단계 후보
 
 - 검색: [Pagefind](https://pagefind.app) — 정적 사이트용, 다국어 지원
 - 댓글: [giscus](https://giscus.app) — GitHub Discussions 기반, 무료
-- RSS: `@astrojs/rss` 로 언어별 피드 분리 생성 권장
+- sitemap: 한 차례 빌드 에러로 제거됨 — 재도입 시 원인 파악 필요
