@@ -13,6 +13,7 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
+const cleanSlug = entry.slug.replace(LOCALE_PREFIX_RE, '');
 
 const subcategoryLabel: Record<string, string> = {
   review: '리뷰',
@@ -29,24 +30,75 @@ const subcategoryLabel: Record<string, string> = {
   <h1 class="post-title">{entry.data.title}</h1>
   <div class="post-date-row">
     <time class="post-date">{entry.data.publishedAt.toLocaleDateString()}</time>
-    <span class="post-views" data-slug={entry.slug.replace(LOCALE_PREFIX_RE, '')}>조회수 불러오는 중...</span>
+    <span class="post-views" data-slug={cleanSlug}>조회수 불러오는 중...</span>
   </div>
   <article class="post-body">
     <Content />
   </article>
+  <div class="like-bar">
+    <button class="like-button" data-slug={cleanSlug} aria-pressed="false">
+      <span class="like-icon">♡</span>
+      <span class="like-count">-</span>
+    </button>
+  </div>
 </BaseLayout>
 
 <script>
-  const el = document.querySelector('.post-views');
-  if (el) {
-    const slug = el.getAttribute('data-slug');
+  const viewEl = document.querySelector('.post-views');
+  if (viewEl) {
+    const slug = viewEl.getAttribute('data-slug');
     fetch(`/api/counter/post?slug=${encodeURIComponent(slug ?? '')}`)
       .then((res) => res.json())
       .then((data) => {
-        el.textContent = `조회 ${data.count.toLocaleString()}`;
+        viewEl.textContent = `조회 ${data.count.toLocaleString()}`;
       })
       .catch(() => {
-        el.textContent = '';
+        viewEl.textContent = '';
       });
+  }
+
+  const likeBtn = document.querySelector('.like-button');
+  if (likeBtn) {
+    const slug = likeBtn.getAttribute('data-slug') ?? '';
+    const storageKey = `liked:${slug}`;
+    const countEl = likeBtn.querySelector('.like-count');
+    const iconEl = likeBtn.querySelector('.like-icon');
+
+    function render(liked, count) {
+      likeBtn.setAttribute('aria-pressed', String(liked));
+      likeBtn.classList.toggle('liked', liked);
+      if (iconEl) iconEl.textContent = liked ? '♥' : '♡';
+      if (countEl) countEl.textContent = String(count);
+    }
+
+    fetch(`/api/like/post?slug=${encodeURIComponent(slug)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const liked = localStorage.getItem(storageKey) === '1';
+        render(liked, data.count);
+      })
+      .catch(() => {
+        if (countEl) countEl.textContent = '0';
+      });
+
+    likeBtn.addEventListener('click', () => {
+      const currentlyLiked = localStorage.getItem(storageKey) === '1';
+      const nextLiked = !currentlyLiked;
+
+      likeBtn.setAttribute('disabled', 'true');
+      fetch(`/api/like/post?slug=${encodeURIComponent(slug)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ liked: nextLiked }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          localStorage.setItem(storageKey, nextLiked ? '1' : '0');
+          render(nextLiked, data.count);
+        })
+        .finally(() => {
+          likeBtn.removeAttribute('disabled');
+        });
+    });
   }
 </script>

@@ -1,0 +1,75 @@
+---
+// Pagefind 기반 검색창. 빌드 시 `npx pagefind --site dist`로 생성된
+// /pagefind/pagefind.js 를 클라이언트에서 동적으로 불러와 사용한다.
+// 로컬 dev 서버(`astro dev`)에는 pagefind 인덱스가 없으므로 여기서는 동작하지 않고,
+// 실제 배포(빌드) 후에만 정상 작동한다.
+---
+
+<div class="search-box">
+  <button class="search-trigger" id="search-open" aria-label="검색 열기">
+    <span class="search-icon">⌕</span>
+    <span class="search-label">search</span>
+  </button>
+
+  <div class="search-modal" id="search-modal" hidden>
+    <div class="search-modal-backdrop" id="search-backdrop"></div>
+    <div class="search-modal-panel">
+      <div id="search-pagefind"></div>
+      <button class="search-close" id="search-close" aria-label="검색 닫기">esc</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const openBtn = document.getElementById('search-open');
+  const closeBtn = document.getElementById('search-close');
+  const backdrop = document.getElementById('search-backdrop');
+  const modal = document.getElementById('search-modal');
+  const mount = document.getElementById('search-pagefind');
+
+  let initialized = false;
+
+  async function initPagefind() {
+    if (initialized) return;
+    initialized = true;
+    try {
+      // @ts-ignore - pagefind.js는 빌드 시점에만 생성되는 정적 파일
+      const pf = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+      await pf.init();
+      // @ts-ignore
+      const { PagefindUI } = await import(/* @vite-ignore */ '/pagefind/pagefind-ui.js').catch(() => ({}));
+      if (PagefindUI && mount) {
+        new PagefindUI({ element: mount, showImages: false, resetStyles: false });
+      } else if (mount) {
+        mount.innerHTML = '<p class="search-fallback">검색 UI를 불러오지 못했습니다.</p>';
+      }
+    } catch {
+      if (mount) {
+        mount.innerHTML = '<p class="search-fallback">로컬 개발 환경에서는 검색이 동작하지 않습니다. 배포된 사이트에서 확인하세요.</p>';
+      }
+    }
+  }
+
+  function openModal() {
+    modal?.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    initPagefind();
+  }
+
+  function closeModal() {
+    modal?.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+  }
+
+  openBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      openModal();
+    }
+  });
+</script>
