@@ -1,116 +1,104 @@
 ---
-// HeaderLangSwitcher.astro
+// 9개 언어 드롭다운. 클릭으로 열고 닫힘 (hover는 버튼->메뉴로 마우스 이동 시
+// 끊기기 쉬워서 사용성이 떨어지므로 클릭 토글로 변경).
+import { LOCALES, LOCALE_LABELS, type Locale } from '../i18n/utils';
+
 interface Props {
-  currentLang: string;
-  currentPath: string;
+  currentLang: Locale;
+  currentPath: string; // e.g. /ko/it/docker-internals
 }
 
 const { currentLang, currentPath } = Astro.props;
 
-function swapLang(path: string, target: string) {
-  const rest = path.replace(/^\/(ko|en|ja|zh|in|de|uk|il|tw)/, '');
+function swapLang(path: string, target: Locale) {
+  const rest = path.replace(new RegExp(`^/(${LOCALES.join('|')})`), '');
   return `/${target}${rest || '/'}`;
 }
 
-const langs = [
-  { 
-    code: 'ko', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f0-1f1f7.svg', 
-    label: '한국어',
-    supported: true
-  },
-  { 
-    code: 'en', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1fa-1f1f8.svg', 
-    label: 'English',
-    supported: true
-  },
-  { 
-    code: 'ja', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ef-1f1f5.svg', 
-    label: '日本語',
-    supported: false
-  },
-  { 
-    code: 'zh', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1e8-1f1f3.svg', 
-    label: '中文',
-    supported: false
-  },
-  { 
-    code: 'in', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ee-1f1f3.svg', 
-    label: 'Hindi',
-    supported: false
-  },
-  { 
-    code: 'de', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1e9-1f1ea.svg', 
-    label: 'Deutsch',
-    supported: false
-  },
-  { 
-    code: 'uk', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ec-1f1e7.svg', 
-    label: 'English (UK)',
-    supported: false
-  },
-  { 
-    code: 'il', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ee-1f1f1.svg', 
-    label: 'עברית',
-    supported: false
-  },
-  { 
-    code: 'tw', 
-    flagUrl: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f9-1f1fc.svg', 
-    label: '繁體中文',
-    supported: false
-  },
-];
+// 실제 콘텐츠가 존재하는 언어. 나머지는 "준비중"으로 비활성 표시.
+const SUPPORTED: Locale[] = ['ko', 'en'];
 
-const currentItem = langs.find((l) => l.code === currentLang) || langs[0];
+const FLAG_EMOJI: Record<Locale, string> = {
+  ko: '🇰🇷',
+  en: '🇺🇸',
+  ja: '🇯🇵',
+  zh: '🇨🇳',
+  in: '🇮🇳',
+  de: '🇩🇪',
+  uk: '🇬🇧',
+  il: '🇮🇱',
+  tw: '🇹🇼',
+};
 ---
 
-<div class="lang-container">
-  <svg class="lang-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="2" y1="12" x2="22" y2="12"></line>
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-  </svg>
+<div class="lang-dropdown" id="lang-dropdown">
+  <button
+    type="button"
+    class="lang-dropdown-btn"
+    id="lang-dropdown-btn"
+    aria-haspopup="listbox"
+    aria-expanded="false"
+  >
+    <span class="flag-wrapper"><span aria-hidden="true">{FLAG_EMOJI[currentLang]}</span></span>
+    <span>{LOCALE_LABELS[currentLang]}</span>
+    <span class="arrow" aria-hidden="true">▾</span>
+  </button>
 
-  <div class="lang-dropdown">
-    <button class="lang-dropdown-btn" aria-haspopup="true">
-      <span class="flag-wrapper">
-        <img src={currentItem.flagUrl} alt={currentItem.label} class="flag-img" />
-      </span>
-      <span class="arrow">▾</span>
-    </button>
-
-    <ul class="lang-dropdown-menu">
-      {langs.map((l) => (
+  <ul class="lang-dropdown-menu" id="lang-dropdown-menu" role="listbox">
+    {LOCALES.map((code) => {
+      const supported = SUPPORTED.includes(code);
+      const isCurrent = code === currentLang;
+      return (
         <li>
-          {l.supported ? (
+          {supported ? (
             <a
-              href={swapLang(currentPath, l.code)}
-              class:list={[{ active: l.code === currentLang }]}
+              href={swapLang(currentPath, code)}
+              class="lang-item"
+              class:list={[{ active: isCurrent }]}
+              aria-current={isCurrent ? 'true' : undefined}
             >
-              <span class="flag-wrapper">
-                <img src={l.flagUrl} alt={l.label} class="flag-img" />
-              </span>
-              <span class="lang-name">{l.label}</span>
+              <span class="flag-wrapper"><span aria-hidden="true">{FLAG_EMOJI[code]}</span></span>
+              <span>{LOCALE_LABELS[code]}</span>
             </a>
           ) : (
-            <span class="lang-item disabled" title="준비중 / Coming soon">
-              <span class="flag-wrapper">
-                <img src={l.flagUrl} alt={l.label} class="flag-img" />
-              </span>
-              <span class="lang-name">{l.label}</span>
+            <span class="lang-item disabled" aria-disabled="true">
+              <span class="flag-wrapper"><span aria-hidden="true">{FLAG_EMOJI[code]}</span></span>
+              <span>{LOCALE_LABELS[code]}</span>
               <span class="badge">준비중</span>
             </span>
           )}
         </li>
-      ))}
-    </ul>
-  </div>
+      );
+    })}
+  </ul>
 </div>
+
+<script>
+  const dropdown = document.getElementById('lang-dropdown');
+  const btn = document.getElementById('lang-dropdown-btn');
+
+  function closeDropdown() {
+    dropdown?.classList.remove('open');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleDropdown(e: Event) {
+    e.stopPropagation();
+    const isOpen = dropdown?.classList.toggle('open');
+    btn?.setAttribute('aria-expanded', String(!!isOpen));
+  }
+
+  btn?.addEventListener('click', toggleDropdown);
+
+  // 드롭다운 바깥을 클릭하면 닫기
+  document.addEventListener('click', (e) => {
+    if (dropdown && !dropdown.contains(e.target as Node)) {
+      closeDropdown();
+    }
+  });
+
+  // Esc로 닫기
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDropdown();
+  });
+</script>
