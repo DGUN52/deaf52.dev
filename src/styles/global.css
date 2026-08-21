@@ -258,7 +258,7 @@ button:focus-visible {
   z-index: 50;
 }
 
-.lang-dropdown:hover .lang-dropdown-menu,
+.lang-dropdown.open .lang-dropdown-menu,
 .lang-dropdown:focus-within .lang-dropdown-menu {
   display: block;
 }
