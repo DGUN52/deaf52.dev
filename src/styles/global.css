@@ -886,6 +886,10 @@ button:focus-visible {
   padding: 10vh 1rem 2rem;
 }
 
+.search-modal[hidden] {
+  display: none;
+}
+
 .search-modal-backdrop {
   position: absolute;
   inset: 0;
