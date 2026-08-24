@@ -2,26 +2,26 @@
 import '../styles/global.css';
 import HeaderLangSwitcher from '../components/HeaderLangSwitcher.astro';
 import SearchBox from '../components/SearchBox.astro';
+import { LOCALES, type Locale } from '../i18n/utils';
 
 interface Props {
   title: string;
   description?: string;
+  // 현재 글에 실제로 존재하는 언어 목록. 글 상세 페이지에서 넘겨주면
+  // 헤더 드롭다운에서 번역 없는 언어가 정확히 회색 처리된다.
+  // 넘기지 않으면(홈/카테고리 목록 등) 전체 언어를 사용 가능한 것으로 간주.
+  availableLangs?: Locale[];
 }
-const { title, description = 'deaf52 · IT & humanities' } = Astro.props;
+const { title, description = 'deaf52 · IT & humanities', availableLangs } = Astro.props;
 
 const currentPath = Astro.url.pathname;
-const currentLang: 'ko' | 'en' = currentPath.startsWith('/en') ? 'en' : 'ko';
+const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.split('/')[1])
+  ? (currentPath.split('/')[1] as Locale)
+  : 'ko';
 ---
 <!doctype html>
 <html lang={currentLang}>
 <head>
-  <!-- Google Tag Manager -->
-  <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-TFW86BDB');</script>
-  <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title} · deaf52</title>
@@ -37,17 +37,13 @@ const currentLang: 'ko' | 'en' = currentPath.startsWith('/en') ? 'en' : 'ko';
   />
 </head>
 <body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
   <header class="site-header">
     <a href="/" class="site-title-group">
       <span class="site-title">deaf52</span>
       <span class="site-subtitle">IT &amp; humanities</span>
     </a>
     <nav class="site-nav">
-      <HeaderLangSwitcher currentLang={currentLang} currentPath={currentPath} />
+      <HeaderLangSwitcher currentLang={currentLang} currentPath={currentPath} availableLangs={availableLangs} />
       <SearchBox />
       <span class="nav-label">menu</span>
       <a href={`/${currentLang}/it/`}>IT기술</a>

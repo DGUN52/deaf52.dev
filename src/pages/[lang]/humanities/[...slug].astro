@@ -14,6 +14,8 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await entry.render();
 const cleanSlug = entry.slug.replace(LOCALE_PREFIX_RE, '');
+const translations = await getTranslations(entry, 'humanities');
+const availableLangs = Object.keys(translations) as Array<typeof entry.data.lang>;
 
 const subcategoryLabel: Record<string, string> = {
   review: '리뷰',
@@ -23,7 +25,7 @@ const subcategoryLabel: Record<string, string> = {
 };
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.description}>
+<BaseLayout title={entry.data.title} description={entry.data.description} availableLangs={availableLangs}>
   <div class="post-meta-bar">
     <span class="post-tag humanities">인문학 · {subcategoryLabel[entry.data.subcategory]}</span>
   </div>

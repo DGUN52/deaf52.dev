@@ -1,34 +1,42 @@
 ---
-// 9개 언어 드롭다운. 클릭으로 열고 닫힘 (hover는 버튼->메뉴로 마우스 이동 시
+// 언어 드롭다운. 클릭으로 열고 닫힘 (hover는 버튼->메뉴로 마우스 이동 시
 // 끊기기 쉬워서 사용성이 떨어지므로 클릭 토글로 변경).
 import { LOCALES, LOCALE_LABELS, type Locale } from '../i18n/utils';
 
 interface Props {
   currentLang: Locale;
   currentPath: string; // e.g. /ko/it/docker-internals
+  // 현재 글(또는 페이지)에 실제로 존재하는 언어 목록.
+  // 글 상세 페이지에서는 getTranslations() 결과로 정확히 계산해서 넘겨야 함.
+  // 넘기지 않으면(홈/카테고리 목록처럼 특정 글에 종속되지 않는 페이지) 전체 언어를 사용 가능한 것으로 간주.
+  availableLangs?: Locale[];
 }
 
-const { currentLang, currentPath } = Astro.props;
+const { currentLang, currentPath, availableLangs = LOCALES as unknown as Locale[] } = Astro.props;
 
 function swapLang(path: string, target: Locale) {
   const rest = path.replace(new RegExp(`^/(${LOCALES.join('|')})`), '');
   return `/${target}${rest || '/'}`;
 }
 
-// 실제 콘텐츠가 존재하는 언어. 나머지는 "준비중"으로 비활성 표시.
-const SUPPORTED: Locale[] = ['ko', 'en'];
-
-const FLAG_EMOJI: Record<Locale, string> = {
-  ko: '🇰🇷',
-  en: '🇺🇸',
-  ja: '🇯🇵',
-  zh: '🇨🇳',
-  in: '🇮🇳',
-  de: '🇩🇪',
-  uk: '🇬🇧',
-  il: '🇮🇱',
-  tw: '🇹🇼',
+// Windows 등 일부 환경에서 국기 이모지가 안 뜨는 문제가 있어,
+// 이모지 대신 flagcdn.com의 실제 국기 이미지(svg)를 사용한다.
+// ISO 3166-1 alpha-2 국가 코드 기준 (언어 코드와 다를 수 있어 매핑 필요).
+const FLAG_COUNTRY: Record<Locale, string> = {
+  ko: 'kr',
+  en: 'us',
+  ja: 'jp',
+  zh: 'cn',
+  in: 'in',
+  de: 'de',
+  uk: 'gb',
+  il: 'il',
+  tw: 'tw',
 };
+
+function flagUrl(code: Locale) {
+  return `https://flagcdn.com/${FLAG_COUNTRY[code]}.svg`;
+}
 ---
 
 <div class="lang-dropdown" id="lang-dropdown">
@@ -39,14 +47,14 @@ const FLAG_EMOJI: Record<Locale, string> = {
     aria-haspopup="listbox"
     aria-expanded="false"
   >
-    <span class="flag-wrapper"><span aria-hidden="true">{FLAG_EMOJI[currentLang]}</span></span>
+    <span class="flag-wrapper"><img src={flagUrl(currentLang)} alt="" class="flag-img" loading="eager" /></span>
     <span>{LOCALE_LABELS[currentLang]}</span>
     <span class="arrow" aria-hidden="true">▾</span>
   </button>
 
   <ul class="lang-dropdown-menu" id="lang-dropdown-menu" role="listbox">
     {LOCALES.map((code) => {
-      const supported = SUPPORTED.includes(code);
+      const supported = availableLangs.includes(code);
       const isCurrent = code === currentLang;
       return (
         <li>
@@ -57,14 +65,13 @@ const FLAG_EMOJI: Record<Locale, string> = {
               class:list={[{ active: isCurrent }]}
               aria-current={isCurrent ? 'true' : undefined}
             >
-              <span class="flag-wrapper"><span aria-hidden="true">{FLAG_EMOJI[code]}</span></span>
+              <span class="flag-wrapper"><img src={flagUrl(code)} alt="" class="flag-img" loading="lazy" /></span>
               <span>{LOCALE_LABELS[code]}</span>
             </a>
           ) : (
             <span class="lang-item disabled" aria-disabled="true">
-              <span class="flag-wrapper"><span aria-hidden="true">{FLAG_EMOJI[code]}</span></span>
+              <span class="flag-wrapper"><img src={flagUrl(code)} alt="" class="flag-img" loading="lazy" /></span>
               <span>{LOCALE_LABELS[code]}</span>
-              <span class="badge">준비중</span>
             </span>
           )}
         </li>
