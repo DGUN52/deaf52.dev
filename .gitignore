@@ -8,3 +8,4 @@ npm-debug.log*
 .idea/
 src/content/it/**
 src/content/humanities/**
+src/content/public/**

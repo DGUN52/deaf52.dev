@@ -22,9 +22,6 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
 <!doctype html>
 <html lang={currentLang}>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <!-- Google Tag Manager -->
   <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -32,7 +29,8 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-TFW86BDB');</script>
   <!-- End Google Tag Manager -->
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title} · deaf52</title>
   <meta name="description" content={description} />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -44,14 +42,18 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
     href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
     rel="stylesheet"
   />
+  <link
+    rel="alternate"
+    type="application/rss+xml"
+    title={`deaf52 (${currentLang})`}
+    href={`/${currentLang}/rss.xml`}
+  />
 </head>
 <body>
-
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <!-- End Google Tag Manager (noscript) -->
-
   <header class="site-header">
     <a href="/" class="site-title-group">
       <span class="site-title">deaf52</span>
@@ -71,6 +73,7 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
   <footer class="site-footer">
     <p>
       &copy; 2026 deaf52.dev &middot; <a href="mailto:eorms96@naver.com">eorms96@naver.com</a>
+      &middot; <a href={`/${currentLang}/rss.xml`}>RSS</a>
       &middot; <span id="site-visit-counter">방문자수 불러오는 중...</span>
     </p>
   </footer>
