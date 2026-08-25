@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /pagefind/
+
+Sitemap: https://deaf52.dev/sitemap-index.xml
