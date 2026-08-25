@@ -689,6 +689,11 @@ button:focus-visible {
   text-decoration-color: var(--tech);
 }
 
+.site-footer a.kofi-link:hover {
+  color: var(--human);
+  text-decoration-color: var(--human);
+}
+
 /* ---------- Nav category (hover indicator) ---------- */
 .site-nav .nav-category {
   position: relative;
