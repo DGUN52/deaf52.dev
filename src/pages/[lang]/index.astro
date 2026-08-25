@@ -1,13 +1,13 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { LOCALES, LOCALE_PREFIX_RE } from '../../i18n/utils';
+import { LOCALES, LOCALE_PREFIX_RE, type Locale } from '../../i18n/utils';
 
 export function getStaticPaths() {
   return LOCALES.map((lang) => ({ params: { lang } }));
 }
 
-const { lang } = Astro.params;
+const { lang } = Astro.params as { lang: Locale };
 
 const itPosts = (await getCollection('it'))
   .filter((p) => p.data.lang === lang && !p.data.draft)
@@ -18,8 +18,8 @@ const humanitiesPosts = (await getCollection('humanities'))
   .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 
 const t = lang === 'ko'
-  ? { it: 'IT기술', itSub: '기술별 기록', humanities: '인문학', humanitiesSub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.' }
-  : { it: 'Tech', itSub: 'notes by technology', humanities: 'Humanities', humanitiesSub: 'reviews, reflections, writing', empty: 'No posts yet.' };
+  ? { it: 'IT기술', itSub: '기술별 기록', humanities: '인문학', humanitiesSub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.', popular: '인기 글', popularViews: '조회수 TOP', popularLikes: '좋아요 TOP' }
+  : { it: 'Tech', itSub: 'notes by technology', humanities: 'Humanities', humanitiesSub: 'reviews, reflections, writing', empty: 'No posts yet.', popular: 'Popular', popularViews: 'Most viewed', popularLikes: 'Most liked' };
 
 const subcategoryLabel: Record<string, string> = {
   review: lang === 'ko' ? '리뷰' : 'review',
@@ -27,9 +27,36 @@ const subcategoryLabel: Record<string, string> = {
   fiction: lang === 'ko' ? '픽션' : 'fiction',
   nonfiction: lang === 'ko' ? '논픽션' : 'nonfiction',
 };
+
+// 클라이언트에서 slug -> {title, category} 매핑으로 인기글 API 결과를 표시에 쓸 수 있도록
+// 빌드 타임에 미리 데이터를 만들어 심어둔다.
+const postMeta: Record<string, { title: string; category: 'it' | 'humanities' }> = {};
+for (const p of itPosts) {
+  postMeta[p.slug.replace(LOCALE_PREFIX_RE, '')] = { title: p.data.title, category: 'it' };
+}
+for (const p of humanitiesPosts) {
+  postMeta[p.slug.replace(LOCALE_PREFIX_RE, '')] = { title: p.data.title, category: 'humanities' };
+}
 ---
 
 <BaseLayout title={lang === 'ko' ? 'deaf52' : 'deaf52'}>
+  <section class="popular-section">
+    <div class="section-heading popular">
+      <span class="marker">★</span>
+      <h2>{t.popular}</h2>
+    </div>
+    <div class="popular-grid">
+      <div class="popular-col">
+        <p class="popular-col-title">{t.popularViews}</p>
+        <ol class="popular-list" id="popular-views" data-metric="views"></ol>
+      </div>
+      <div class="popular-col">
+        <p class="popular-col-title">{t.popularLikes}</p>
+        <ol class="popular-list" id="popular-likes" data-metric="likes"></ol>
+      </div>
+    </div>
+  </section>
+
   <section>
     <div class="section-heading it">
       <span class="marker">01</span>
@@ -62,13 +89,47 @@ const subcategoryLabel: Record<string, string> = {
     <ul class="post-list humanities">
       {humanitiesPosts.map((post) => (
         <li>
+          <span class="eyebrow">{subcategoryLabel[post.data.subcategory]}</span>
           <a href={`/${lang}/humanities/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
             {post.data.title}
           </a>
-          <!-- Align right like IT tags -->
-          <span class="tags">{subcategoryLabel[post.data.subcategory]}</span>
         </li>
       ))}
     </ul>
   </section>
 </BaseLayout>
+
+<script define:vars={{ postMeta, lang }}>
+  async function loadPopular(elId, metric) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    try {
+      const res = await fetch(`/api/ranking?metric=${metric}&limit=5`);
+      const data = await res.json();
+      const items = (data.items || [])
+        .map((item) => ({ ...item, meta: postMeta[item.slug] }))
+        .filter((item) => item.meta); // 현재 언어에 존재하는 글만
+
+      if (items.length === 0) {
+        el.innerHTML = '<li class="popular-empty">-</li>';
+        return;
+      }
+
+      el.innerHTML = items
+        .map(
+          (item) => `
+        <li>
+          <a href="/${lang}/${item.meta.category}/${item.slug}">${item.meta.title}</a>
+          <span class="popular-count">${item.count.toLocaleString()}</span>
+        </li>
+      `
+        )
+        .join('');
+    } catch {
+      el.innerHTML = '<li class="popular-empty">-</li>';
+    }
+  }
+
+  loadPopular('popular-views', 'views');
+  loadPopular('popular-likes', 'likes');
+</script>

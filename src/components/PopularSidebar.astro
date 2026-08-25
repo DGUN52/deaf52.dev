@@ -1,0 +1,83 @@
+---
+// 인기글 TOP5 (조회수/좋아요 기준). 데스크탑에서는 좌측 sticky 사이드바로,
+// 모바일에서는 CSS로 본문 하단에 재배치된다 (별도 마크업 분기 없이 order로 처리).
+//
+// postMeta: 현재 언어에서 실제로 존재하는 글들의 slug -> {title, category} 매핑.
+// 클라이언트에서 /api/ranking 결과(slug, count)와 이 매핑을 조합해 렌더링한다.
+import { getCollection } from 'astro:content';
+import { LOCALE_PREFIX_RE, type Locale } from '../i18n/utils';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+
+const itPosts = (await getCollection('it')).filter((p) => p.data.lang === lang && !p.data.draft);
+const humanitiesPosts = (await getCollection('humanities')).filter((p) => p.data.lang === lang && !p.data.draft);
+
+const postMeta: Record<string, { title: string; category: 'it' | 'humanities' }> = {};
+for (const p of itPosts) {
+  postMeta[p.slug.replace(LOCALE_PREFIX_RE, '')] = { title: p.data.title, category: 'it' };
+}
+for (const p of humanitiesPosts) {
+  postMeta[p.slug.replace(LOCALE_PREFIX_RE, '')] = { title: p.data.title, category: 'humanities' };
+}
+
+const t = lang === 'ko'
+  ? { popular: '인기 글', views: '조회수 TOP', likes: '좋아요 TOP' }
+  : { popular: 'Popular', views: 'Most viewed', likes: 'Most liked' };
+---
+
+<aside class="popular-sidebar">
+  <div class="popular-sidebar-inner">
+    <p class="popular-sidebar-title">{t.popular}</p>
+
+    <div class="popular-sidebar-col">
+      <p class="popular-col-title">{t.views}</p>
+      <ol class="popular-list" id="sidebar-popular-views"></ol>
+    </div>
+
+    <div class="popular-sidebar-col">
+      <p class="popular-col-title">{t.likes}</p>
+      <ol class="popular-list" id="sidebar-popular-likes"></ol>
+    </div>
+
+    <!-- 나중에 애드센스 등을 추가할 자리 -->
+    <div class="popular-sidebar-ad-slot" id="popular-sidebar-ad-slot"></div>
+  </div>
+</aside>
+
+<script define:vars={{ postMeta, lang }}>
+  async function loadPopular(elId, metric) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    try {
+      const res = await fetch(`/api/ranking?metric=${metric}&limit=5`);
+      const data = await res.json();
+      const items = (data.items || [])
+        .map((item) => ({ ...item, meta: postMeta[item.slug] }))
+        .filter((item) => item.meta);
+
+      if (items.length === 0) {
+        el.innerHTML = '<li class="popular-empty">-</li>';
+        return;
+      }
+
+      el.innerHTML = items
+        .map(
+          (item) => `
+        <li>
+          <a href="/${lang}/${item.meta.category}/${item.slug}">${item.meta.title}</a>
+          <span class="popular-count">${item.count.toLocaleString()}</span>
+        </li>
+      `
+        )
+        .join('');
+    } catch {
+      el.innerHTML = '<li class="popular-empty">-</li>';
+    }
+  }
+
+  loadPopular('sidebar-popular-views', 'views');
+  loadPopular('sidebar-popular-likes', 'likes');
+</script>

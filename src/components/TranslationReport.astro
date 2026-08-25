@@ -1,0 +1,414 @@
+---
+// 번역 신고 버튼 + 모달. 하단 중앙 버튼(항상 표시) + 화면 우측에 고정되는 플로팅 버튼(데스크탑 전용, CSS로 처리).
+// 두 버튼 모두 같은 모달(#report-modal)을 공유한다.
+import type { Locale } from '../i18n/utils';
+
+interface Props {
+  slug: string;
+  lang: Locale;
+}
+const { slug, lang } = Astro.props;
+
+type Dict = {
+  trigger: string;
+  floatingLabel: string;
+  close: string;
+  title: string;
+  sectionLabel: string;
+  sectionPlaceholder: string;
+  pickPrefix: string;
+  pickBtn: string;
+  issueLabel: string;
+  issuePlaceholder: string;
+  issueHard: string;
+  issueNotTranslated: string;
+  issueWrongMeaning: string;
+  issueTypo: string;
+  issueOther: string;
+  commentLabel: string;
+  commentPlaceholder: string;
+  submit: string;
+  pickedFallback: string;
+  errNoIssueType: string;
+  sending: string;
+  success: string;
+  failure: string;
+};
+
+const DICT: Record<Locale, Dict> = {
+  ko: {
+    trigger: '번역이 이상해요',
+    floatingLabel: '번역<br />신고',
+    close: 'esc',
+    title: '번역 신고',
+    sectionLabel: '화면의 어느 부분인가요? (선택)',
+    sectionPlaceholder: '예: 첫 번째 문단, 코드 설명 부분',
+    pickPrefix: '또는',
+    pickBtn: '본문에서 클릭해서 선택',
+    issueLabel: '어떤 문제인가요?',
+    issuePlaceholder: '선택해주세요',
+    issueHard: '이해하기 어려워요',
+    issueNotTranslated: '번역되지 않았어요',
+    issueWrongMeaning: '의미가 원문과 달라요',
+    issueTypo: '오탈자가 있어요',
+    issueOther: '기타',
+    commentLabel: '기타 의견 (선택)',
+    commentPlaceholder: '자유롭게 남겨주세요',
+    submit: '신고 보내기',
+    pickedFallback: '(선택한 영역)',
+    errNoIssueType: '문제 유형을 선택해주세요.',
+    sending: '전송 중...',
+    success: '신고가 접수됐습니다. 감사합니다!',
+    failure: '전송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+  },
+  en: {
+    trigger: 'Report translation issue',
+    floatingLabel: 'Report<br />issue',
+    close: 'esc',
+    title: 'Report translation issue',
+    sectionLabel: 'Which part of the page? (optional)',
+    sectionPlaceholder: 'e.g. first paragraph, code explanation',
+    pickPrefix: 'or',
+    pickBtn: 'click a section on the page',
+    issueLabel: 'What is the issue?',
+    issuePlaceholder: 'Please select',
+    issueHard: 'Hard to understand',
+    issueNotTranslated: 'Not translated',
+    issueWrongMeaning: 'Meaning differs from the original',
+    issueTypo: 'Typo',
+    issueOther: 'Other',
+    commentLabel: 'Additional comments (optional)',
+    commentPlaceholder: 'Feel free to leave a note',
+    submit: 'Submit report',
+    pickedFallback: '(selected section)',
+    errNoIssueType: 'Please select an issue type.',
+    sending: 'Sending...',
+    success: 'Your report has been submitted. Thank you!',
+    failure: 'Failed to send. Please try again later.',
+  },
+  ja: {
+    trigger: '翻訳の問題を報告',
+    floatingLabel: '翻訳<br />報告',
+    close: 'esc',
+    title: '翻訳の問題を報告',
+    sectionLabel: '画面のどの部分ですか？（任意）',
+    sectionPlaceholder: '例：最初の段落、コード説明部分',
+    pickPrefix: 'または',
+    pickBtn: '本文をクリックして選択',
+    issueLabel: 'どのような問題ですか？',
+    issuePlaceholder: '選択してください',
+    issueHard: '理解しにくい',
+    issueNotTranslated: '翻訳されていない',
+    issueWrongMeaning: '原文と意味が異なる',
+    issueTypo: '誤字がある',
+    issueOther: 'その他',
+    commentLabel: 'その他のご意見（任意）',
+    commentPlaceholder: '自由にご記入ください',
+    submit: '報告を送信',
+    pickedFallback: '（選択した部分）',
+    errNoIssueType: '問題の種類を選択してください。',
+    sending: '送信中...',
+    success: '報告を受け付けました。ありがとうございます！',
+    failure: '送信に失敗しました。しばらくしてから再度お試しください。',
+  },
+  zh: {
+    trigger: '反馈翻译问题',
+    floatingLabel: '反馈<br />翻译',
+    close: 'esc',
+    title: '反馈翻译问题',
+    sectionLabel: '页面的哪个部分？（可选）',
+    sectionPlaceholder: '例如：第一段、代码说明部分',
+    pickPrefix: '或者',
+    pickBtn: '在正文中点击选择',
+    issueLabel: '是什么问题？',
+    issuePlaceholder: '请选择',
+    issueHard: '难以理解',
+    issueNotTranslated: '未被翻译',
+    issueWrongMeaning: '含义与原文不符',
+    issueTypo: '有错别字',
+    issueOther: '其他',
+    commentLabel: '其他意见（可选）',
+    commentPlaceholder: '欢迎留言',
+    submit: '提交反馈',
+    pickedFallback: '（已选区域）',
+    errNoIssueType: '请选择问题类型。',
+    sending: '发送中...',
+    success: '反馈已提交，谢谢！',
+    failure: '发送失败，请稍后重试。',
+  },
+  in: {
+    trigger: 'अनुवाद की समस्या बताएं',
+    floatingLabel: 'समस्या<br />बताएं',
+    close: 'esc',
+    title: 'अनुवाद की समस्या बताएं',
+    sectionLabel: 'पेज का कौन-सा हिस्सा? (वैकल्पिक)',
+    sectionPlaceholder: 'जैसे: पहला पैराग्राफ, कोड वाला हिस्सा',
+    pickPrefix: 'या',
+    pickBtn: 'लेख में क्लिक करके चुनें',
+    issueLabel: 'समस्या क्या है?',
+    issuePlaceholder: 'कृपया चुनें',
+    issueHard: 'समझना मुश्किल है',
+    issueNotTranslated: 'अनुवाद नहीं हुआ है',
+    issueWrongMeaning: 'अर्थ मूल से अलग है',
+    issueTypo: 'टाइपो है',
+    issueOther: 'अन्य',
+    commentLabel: 'अन्य टिप्पणी (वैकल्पिक)',
+    commentPlaceholder: 'बेझिझक लिखें',
+    submit: 'रिपोर्ट भेजें',
+    pickedFallback: '(चयनित हिस्सा)',
+    errNoIssueType: 'कृपया समस्या का प्रकार चुनें।',
+    sending: 'भेजा जा रहा है...',
+    success: 'रिपोर्ट भेज दी गई है। धन्यवाद!',
+    failure: 'भेजने में विफल रहा। कृपया बाद में फिर कोशिश करें।',
+  },
+  de: {
+    trigger: 'Übersetzungsproblem melden',
+    floatingLabel: 'Melden<br />(Übers.)',
+    close: 'esc',
+    title: 'Übersetzungsproblem melden',
+    sectionLabel: 'Welcher Teil der Seite? (optional)',
+    sectionPlaceholder: 'z. B. erster Absatz, Code-Erklärung',
+    pickPrefix: 'oder',
+    pickBtn: 'im Text anklicken und auswählen',
+    issueLabel: 'Was ist das Problem?',
+    issuePlaceholder: 'Bitte auswählen',
+    issueHard: 'Schwer verständlich',
+    issueNotTranslated: 'Nicht übersetzt',
+    issueWrongMeaning: 'Bedeutung weicht vom Original ab',
+    issueTypo: 'Tippfehler',
+    issueOther: 'Sonstiges',
+    commentLabel: 'Weitere Anmerkungen (optional)',
+    commentPlaceholder: 'Gerne hier eintragen',
+    submit: 'Meldung senden',
+    pickedFallback: '(ausgewählter Bereich)',
+    errNoIssueType: 'Bitte wähle eine Problemart aus.',
+    sending: 'Wird gesendet...',
+    success: 'Danke, deine Meldung wurde übermittelt!',
+    failure: 'Senden fehlgeschlagen. Bitte später erneut versuchen.',
+  },
+  uk: {
+    trigger: 'Report translation issue',
+    floatingLabel: 'Report<br />issue',
+    close: 'esc',
+    title: 'Report translation issue',
+    sectionLabel: 'Which part of the page? (optional)',
+    sectionPlaceholder: 'e.g. first paragraph, code explanation',
+    pickPrefix: 'or',
+    pickBtn: 'click a section on the page',
+    issueLabel: 'What is the issue?',
+    issuePlaceholder: 'Please select',
+    issueHard: 'Hard to understand',
+    issueNotTranslated: 'Not translated',
+    issueWrongMeaning: 'Meaning differs from the original',
+    issueTypo: 'Typo',
+    issueOther: 'Other',
+    commentLabel: 'Additional comments (optional)',
+    commentPlaceholder: 'Feel free to leave a note',
+    submit: 'Submit report',
+    pickedFallback: '(selected section)',
+    errNoIssueType: 'Please select an issue type.',
+    sending: 'Sending...',
+    success: 'Your report has been submitted. Thank you!',
+    failure: 'Failed to send. Please try again later.',
+  },
+  il: {
+    trigger: 'דווח על בעיית תרגום',
+    floatingLabel: 'דיווח<br />תרגום',
+    close: 'esc',
+    title: 'דווח על בעיית תרגום',
+    sectionLabel: 'איזה חלק בדף? (אופציונלי)',
+    sectionPlaceholder: 'למשל: הפסקה הראשונה, הסבר הקוד',
+    pickPrefix: 'או',
+    pickBtn: 'לחץ על קטע בטקסט כדי לבחור',
+    issueLabel: 'מה הבעיה?',
+    issuePlaceholder: 'אנא בחר',
+    issueHard: 'קשה להבנה',
+    issueNotTranslated: 'לא תורגם',
+    issueWrongMeaning: 'המשמעות שונה מהמקור',
+    issueTypo: 'שגיאת כתיב',
+    issueOther: 'אחר',
+    commentLabel: 'הערות נוספות (אופציונלי)',
+    commentPlaceholder: 'אפשר לכתוב כאן בחופשיות',
+    submit: 'שלח דיווח',
+    pickedFallback: '(קטע נבחר)',
+    errNoIssueType: 'אנא בחר סוג בעיה.',
+    sending: 'שולח...',
+    success: 'הדיווח נשלח. תודה!',
+    failure: 'השליחה נכשלה. נסה שוב מאוחר יותר.',
+  },
+  tw: {
+    trigger: '回報翻譯問題',
+    floatingLabel: '回報<br />翻譯',
+    close: 'esc',
+    title: '回報翻譯問題',
+    sectionLabel: '頁面的哪個部分？（選填）',
+    sectionPlaceholder: '例如：第一段、程式碼說明部分',
+    pickPrefix: '或者',
+    pickBtn: '在內文中點擊選取',
+    issueLabel: '是什麼問題？',
+    issuePlaceholder: '請選擇',
+    issueHard: '難以理解',
+    issueNotTranslated: '未被翻譯',
+    issueWrongMeaning: '意思與原文不符',
+    issueTypo: '有錯字',
+    issueOther: '其他',
+    commentLabel: '其他意見（選填）',
+    commentPlaceholder: '歡迎留言',
+    submit: '送出回報',
+    pickedFallback: '（已選取的區域）',
+    errNoIssueType: '請選擇問題類型。',
+    sending: '傳送中...',
+    success: '回報已送出，謝謝！',
+    failure: '傳送失敗，請稍後再試。',
+  },
+};
+
+const t = DICT[lang] ?? DICT.en;
+---
+
+<div class="report-box">
+  <button class="report-trigger" id="report-open">{t.trigger}</button>
+
+  <button class="report-trigger-floating" id="report-open-floating" aria-label={t.trigger}>
+    <span class="report-floating-icon">⚑</span>
+    <span class="report-floating-label" set:html={t.floatingLabel} />
+  </button>
+
+  <div class="report-modal" id="report-modal" hidden dir={lang === 'il' ? 'rtl' : 'ltr'}>
+    <div class="report-modal-backdrop" id="report-backdrop"></div>
+    <div class="report-modal-panel">
+      <button class="report-close" id="report-close" aria-label={t.close}>{t.close}</button>
+      <h3 class="report-title">{t.title}</h3>
+
+      <form id="report-form">
+        <div class="report-field">
+          <label for="report-section">{t.sectionLabel}</label>
+          <input
+            type="text"
+            id="report-section"
+            name="section"
+            placeholder={t.sectionPlaceholder}
+          />
+          <p class="report-hint" id="report-pick-hint">
+            {t.pickPrefix} <button type="button" id="report-pick-btn" class="report-pick-btn">{t.pickBtn}</button>
+          </p>
+        </div>
+
+        <div class="report-field">
+          <label for="report-issue-type">{t.issueLabel}</label>
+          <select id="report-issue-type" name="issueType" required>
+            <option value="">{t.issuePlaceholder}</option>
+            <option value="hard-to-understand">{t.issueHard}</option>
+            <option value="not-translated">{t.issueNotTranslated}</option>
+            <option value="wrong-meaning">{t.issueWrongMeaning}</option>
+            <option value="typo">{t.issueTypo}</option>
+            <option value="other">{t.issueOther}</option>
+          </select>
+        </div>
+
+        <div class="report-field">
+          <label for="report-comment">{t.commentLabel}</label>
+          <textarea id="report-comment" name="comment" rows="3" placeholder={t.commentPlaceholder}></textarea>
+        </div>
+
+        <button type="submit" class="report-submit">{t.submit}</button>
+        <p class="report-status" id="report-status"></p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ slug, lang, t }}>
+  const openBtn = document.getElementById('report-open');
+  const openFloatingBtn = document.getElementById('report-open-floating');
+  const closeBtn = document.getElementById('report-close');
+  const backdrop = document.getElementById('report-backdrop');
+  const modal = document.getElementById('report-modal');
+  const form = document.getElementById('report-form');
+  const statusEl = document.getElementById('report-status');
+  const pickBtn = document.getElementById('report-pick-btn');
+  const sectionInput = document.getElementById('report-section');
+
+  function openModal() {
+    modal?.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    modal?.setAttribute('hidden', '');
+    document.body.style.overflow = '';
+    exitPickMode();
+  }
+
+  openBtn?.addEventListener('click', openModal);
+  openFloatingBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal?.hasAttribute('hidden')) closeModal();
+  });
+
+  // "본문에서 클릭해서 선택" 기능: 활성화하면 모달을 잠깐 숨기고,
+  // 사용자가 본문의 어떤 요소를 클릭하면 그 요소의 가까운 텍스트를 section 값으로 채운다.
+  let pickModeActive = false;
+
+  function enterPickMode() {
+    pickModeActive = true;
+    modal?.setAttribute('hidden', '');
+    document.body.classList.add('report-picking');
+    document.addEventListener('click', handlePickClick, { capture: true });
+  }
+
+  function exitPickMode() {
+    if (!pickModeActive) return;
+    pickModeActive = false;
+    document.body.classList.remove('report-picking');
+    document.removeEventListener('click', handlePickClick, { capture: true });
+  }
+
+  function handlePickClick(e) {
+    if (e.target.closest('.report-box')) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const target = e.target.closest('h1, h2, h3, p, li, pre, blockquote, td, th') || e.target;
+    const text = (target.textContent || '').trim().slice(0, 60);
+    sectionInput.value = text ? `"${text}..."` : t.pickedFallback;
+
+    exitPickMode();
+    openModal();
+  }
+
+  pickBtn?.addEventListener('click', () => {
+    enterPickMode();
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const issueType = document.getElementById('report-issue-type').value;
+    const comment = document.getElementById('report-comment').value;
+    const section = sectionInput.value;
+
+    if (!issueType) {
+      statusEl.textContent = t.errNoIssueType;
+      return;
+    }
+
+    statusEl.textContent = t.sending;
+    try {
+      const res = await fetch('/api/report/translation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, lang, issueType, section: section || null, comment: comment || null }),
+      });
+      if (!res.ok) throw new Error('failed');
+      statusEl.textContent = t.success;
+      form.reset();
+      setTimeout(() => {
+        closeModal();
+        statusEl.textContent = '';
+      }, 1500);
+    } catch {
+      statusEl.textContent = t.failure;
+    }
+  });
+</script>

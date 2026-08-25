@@ -1,14 +1,19 @@
-// 사이트 전체 방문자 수 + 글별 조회수/좋아요를 KV에 기록하는 최소 API.
+// 사이트 전체 방문자 수 + 글별 조회수/좋아요 + 번역 신고를 KV에 기록하는 최소 API.
 //
 // GET  /api/counter/site           -> 사이트 전체 카운트 +1 하고 현재 값 반환
 // GET  /api/counter/post?slug=xxx  -> 해당 글 조회수 +1 하고 현재 값 반환
 // GET  /api/like/post?slug=xxx     -> 해당 글 좋아요 수 조회 (증감 없음)
 // POST /api/like/post?slug=xxx     -> 해당 글 좋아요 토글 (클라이언트가 보낸 liked 여부에 따라 +1/-1)
+// POST /api/report/translation     -> 번역 신고 접수 (body: { slug, lang, issueType, section?, comment? })
+// GET  /api/ranking?metric=views|likes&limit=5  -> 조회수/좋아요 상위 글 목록 (slug, count)
 //
 // wrangler.jsonc의 kv_namespaces에 COUNTERS 바인딩이 설정되어 있어야 동작한다.
 // 좋아요는 "누가 눌렀는지"를 서버에 저장하지 않는다 (로그인 시스템이 없으므로).
 // 클라이언트(브라우저 localStorage)가 "내가 눌렀는지"를 기억하고, 그 상태에 따라 +1/-1을 요청한다.
 // 즉 어뷰징(새로고침 연타로 무한 증가) 방지는 클라이언트 신뢰에 의존하는 단순한 방식이다.
+//
+// 번역 신고는 KV에 "report:{timestamp}:{random}" 키로 각각 저장되며(리스트 형태),
+// 관리자가 나중에 KV 목록을 훑어서 확인하는 방식이다 (별도 관리자 UI는 아직 없음).
 
 export default {
   async fetch(request, env) {
@@ -16,7 +21,9 @@ export default {
 
     if (
       !url.pathname.startsWith('/api/counter/') &&
-      !url.pathname.startsWith('/api/like/')
+      !url.pathname.startsWith('/api/like/') &&
+      !url.pathname.startsWith('/api/report/') &&
+      !url.pathname.startsWith('/api/ranking')
     ) {
       return env.ASSETS.fetch(request);
     }
@@ -34,7 +41,7 @@ export default {
       return json({ count });
     }
 
-    // ---------- 좋아요 (신규) ----------
+    // ---------- 좋아요 (기존) ----------
     if (url.pathname === '/api/like/post') {
       const slug = url.searchParams.get('slug');
       if (!slug) return json({ error: 'slug query param required' }, 400);
@@ -61,6 +68,66 @@ export default {
       }
 
       return new Response('Method Not Allowed', { status: 405 });
+    }
+
+    // ---------- 번역 신고 (신규) ----------
+    if (url.pathname === '/api/report/translation' && request.method === 'POST') {
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ error: 'invalid JSON body' }, 400);
+      }
+
+      const { slug, lang, issueType, section, comment } = body;
+      if (!slug || !lang || !issueType) {
+        return json({ error: 'slug, lang, issueType are required' }, 400);
+      }
+
+      const ALLOWED_ISSUE_TYPES = ['hard-to-understand', 'not-translated', 'wrong-meaning', 'typo', 'other'];
+      if (!ALLOWED_ISSUE_TYPES.includes(issueType)) {
+        return json({ error: 'invalid issueType' }, 400);
+      }
+
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).slice(2, 8);
+      const key = `report:${timestamp}:${randomSuffix}`;
+
+      const record = {
+        slug: String(slug).slice(0, 200),
+        lang: String(lang).slice(0, 10),
+        issueType,
+        section: section ? String(section).slice(0, 200) : null,
+        comment: comment ? String(comment).slice(0, 1000) : null,
+        createdAt: new Date(timestamp).toISOString(),
+      };
+
+      await env.COUNTERS.put(key, JSON.stringify(record));
+
+      return json({ ok: true });
+    }
+
+    // ---------- 인기글 랭킹 (신규) ----------
+    if (url.pathname === '/api/ranking' && request.method === 'GET') {
+      const metric = url.searchParams.get('metric') === 'likes' ? 'like' : 'post';
+      const limit = Math.min(20, parseInt(url.searchParams.get('limit') || '5', 10) || 5);
+
+      const prefix = `${metric}:`;
+      const list = await env.COUNTERS.list({ prefix });
+
+      const entries = await Promise.all(
+        list.keys.map(async (k) => {
+          const value = await env.COUNTERS.get(k.name);
+          return {
+            slug: k.name.slice(prefix.length),
+            count: value ? parseInt(value, 10) : 0,
+          };
+        })
+      );
+
+      entries.sort((a, b) => b.count - a.count);
+
+      return json({ items: entries.slice(0, limit) });
     }
 
     return new Response('Not Found', { status: 404 });

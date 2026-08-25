@@ -939,3 +939,430 @@ button:focus-visible {
   --pagefind-ui-tag: #eae1cc;
   --pagefind-ui-font: "Pretendard", -apple-system, sans-serif;
 }
+
+/* ---------- Translation report ---------- */
+.report-box {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+}
+
+.report-trigger {
+  background: none;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.report-trigger:hover {
+  border-color: var(--human);
+  color: var(--human);
+}
+
+.report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8vh 1rem 2rem;
+}
+
+.report-modal[hidden] {
+  display: none;
+}
+
+.report-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 37, 48, 0.45);
+}
+
+.report-modal-panel {
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(28, 37, 48, 0.25);
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.report-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.report-title {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  margin: 0 0 1.2rem;
+}
+
+.report-field {
+  margin-bottom: 1.1rem;
+}
+
+.report-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.4rem;
+}
+
+.report-field input[type="text"],
+.report-field select,
+.report-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  background: var(--paper-deep);
+  color: var(--ink);
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.report-field input[type="text"]:focus,
+.report-field select:focus,
+.report-field textarea:focus {
+  outline: 2px solid var(--tech);
+  outline-offset: 1px;
+}
+
+.report-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.report-pick-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--tech);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.report-submit {
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 6px;
+  padding: 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.report-submit:hover {
+  opacity: 0.85;
+}
+
+.report-status {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  text-align: center;
+  min-height: 1.2em;
+}
+
+/* 본문에서 영역을 클릭해서 고를 때(pick mode), 커서와 hover 강조로 안내 */
+body.report-picking {
+  cursor: crosshair;
+}
+
+body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):hover {
+  outline: 2px dashed var(--human);
+  outline-offset: 2px;
+  background: var(--human-soft);
+}
+
+/* ---------- Category nav (IT/humanities top switcher) ---------- */
+.category-nav {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.category-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  transition: all 0.15s ease;
+}
+
+.category-nav-item:hover {
+  border-color: var(--tech);
+  color: var(--tech);
+}
+
+.category-nav-item.active {
+  background: var(--paper-deep);
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.category-nav-count {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+/* ---------- Post list date ---------- */
+.post-list-date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.post-list.it li {
+  flex-wrap: wrap;
+}
+
+.post-list.humanities li {
+  flex-wrap: wrap;
+}
+
+/* ---------- Popular posts widget ---------- */
+.popular-section {
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.section-heading.popular .marker {
+  color: var(--human);
+}
+
+.popular-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.popular-col-title {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  margin: 0 0 0.6rem;
+}
+
+.popular-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: popular-rank;
+}
+
+.popular-list li {
+  counter-increment: popular-rank;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.popular-list li::before {
+  content: counter(popular-rank);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--human);
+  min-width: 1.2em;
+}
+
+.popular-list a {
+  flex: 1;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.popular-list a:hover {
+  color: var(--tech);
+}
+
+.popular-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.popular-empty {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .popular-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .category-nav {
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------- Page with sidebar (popular posts) ---------- */
+.page-with-sidebar {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
+.page-shell-with-sidebar {
+  flex: 1;
+  min-width: 0;
+  max-width: 760px;
+  padding-left: 0;
+  padding-right: 0;
+  margin: 0;
+}
+
+.popular-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 1.5rem;
+  order: -1; /* 데스크탑에서는 본문 왼쪽에 오도록 */
+}
+
+.popular-sidebar-inner {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.1rem;
+  background: var(--paper-deep);
+}
+
+.popular-sidebar-title {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.popular-sidebar-col {
+  margin-bottom: 1.2rem;
+}
+
+.popular-sidebar-col:last-of-type {
+  margin-bottom: 0;
+}
+
+.popular-sidebar .popular-list a {
+  font-size: 0.82rem;
+}
+
+.popular-sidebar-ad-slot {
+  margin-top: 1.2rem;
+  min-height: 0; /* 광고 미배치 시 여백 안 남게. 나중에 광고 넣을 때 min-height 조정 */
+}
+
+/* ---------- Mobile: sidebar moves below content, no longer sticky ---------- */
+@media (max-width: 900px) {
+  .page-with-sidebar {
+    flex-direction: column;
+  }
+
+  .popular-sidebar {
+    width: 100%;
+    position: static;
+    order: 1; /* 본문 다음, 즉 최하단으로 이동 */
+  }
+
+  .page-shell-with-sidebar {
+    order: 0;
+    max-width: none;
+  }
+}
+
+/* ---------- Translation report floating button (desktop only, fixed to viewport) ---------- */
+.report-trigger-floating {
+  display: none; /* 기본은 숨김, 데스크탑 미디어쿼리에서만 보이게 함 */
+}
+
+@media (min-width: 901px) {
+  .report-trigger-floating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    position: fixed;
+    right: clamp(0.75rem, 3vw, 2rem);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    color: var(--ink-soft);
+    box-shadow: 0 4px 14px rgba(28, 37, 48, 0.12);
+    transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    z-index: 50;
+  }
+
+  .report-trigger-floating:hover {
+    border-color: var(--human);
+    color: var(--human);
+    transform: translateY(-50%) scale(1.05);
+  }
+}
+
+.report-floating-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.report-floating-label {
+  font-size: 0.62rem;
+  line-height: 1.15;
+  text-align: center;
+}

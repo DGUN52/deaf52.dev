@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import HeaderLangSwitcher from '../components/HeaderLangSwitcher.astro';
 import SearchBox from '../components/SearchBox.astro';
+import PopularSidebar from '../components/PopularSidebar.astro';
 import { LOCALES, type Locale } from '../i18n/utils';
 
 interface Props {
@@ -11,8 +12,11 @@ interface Props {
   // 헤더 드롭다운에서 번역 없는 언어가 정확히 회색 처리된다.
   // 넘기지 않으면(홈/카테고리 목록 등) 전체 언어를 사용 가능한 것으로 간주.
   availableLangs?: Locale[];
+  // true면 좌측에 인기글 사이드바를 배치한다 (데스크탑: sticky 사이드바 / 모바일: 본문 하단).
+  // 글 상세 페이지에서만 켜고, 홈/카테고리 목록 페이지는 기본값(false)으로 둔다.
+  showSidebar?: boolean;
 }
-const { title, description = 'deaf52 · IT & humanities', availableLangs } = Astro.props;
+const { title, description = 'deaf52 · IT & humanities', availableLangs, showSidebar = false } = Astro.props;
 
 const currentPath = Astro.url.pathname;
 const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.split('/')[1])
@@ -23,11 +27,11 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
 <html lang={currentLang}>
 <head>
   <!-- Google Tag Manager -->
-  <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-TFW86BDB');</script>
+    <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TFW86BDB');</script>
   <!-- End Google Tag Manager -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -51,11 +55,12 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
   <!-- End Google Tag Manager (noscript) -->
   <header class="site-header">
-    <a href="/" class="site-title-group">
+    <a href={`/${currentLang}/`} class="site-title-group">
       <span class="site-title">deaf52</span>
       <span class="site-subtitle">IT &amp; humanities</span>
     </a>
@@ -67,9 +72,20 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
       <a href={`/${currentLang}/humanities/`}>인문학</a>
     </nav>
   </header>
-  <main class="page-shell">
-    <slot />
-  </main>
+
+  {showSidebar ? (
+    <div class="page-with-sidebar">
+      <PopularSidebar lang={currentLang} />
+      <main class="page-shell page-shell-with-sidebar">
+        <slot />
+      </main>
+    </div>
+  ) : (
+    <main class="page-shell">
+      <slot />
+    </main>
+  )}
+
   <footer class="site-footer">
     <p>
       &copy; 2026 deaf52.dev &middot; <a href="mailto:eorms96@naver.com">eorms96@naver.com</a>

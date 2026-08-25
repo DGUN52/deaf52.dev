@@ -1,7 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import TranslationReport from '../../../components/TranslationReport.astro';
 import { getTranslations, LOCALE_PREFIX_RE } from '../../../i18n/utils';
+import { formatDate } from '../../../i18n/formatDate';
 
 export async function getStaticPaths() {
   const entries = await getCollection('humanities');
@@ -25,13 +27,13 @@ const subcategoryLabel: Record<string, string> = {
 };
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.description} availableLangs={availableLangs}>
+<BaseLayout title={entry.data.title} description={entry.data.description} availableLangs={availableLangs} showSidebar>
   <div class="post-meta-bar">
     <span class="post-tag humanities">인문학 · {subcategoryLabel[entry.data.subcategory]}</span>
   </div>
   <h1 class="post-title">{entry.data.title}</h1>
   <div class="post-date-row">
-    <time class="post-date">{entry.data.publishedAt.toLocaleDateString()}</time>
+    <time class="post-date">{formatDate(entry.data.publishedAt, entry.data.lang)}</time>
     <span class="post-views" data-slug={cleanSlug}>조회수 불러오는 중...</span>
   </div>
   <article class="post-body">
@@ -43,6 +45,7 @@ const subcategoryLabel: Record<string, string> = {
       <span class="like-count">-</span>
     </button>
   </div>
+  <TranslationReport slug={cleanSlug} lang={entry.data.lang} />
 </BaseLayout>
 
 <script>
