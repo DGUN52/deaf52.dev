@@ -12,11 +12,21 @@ interface Props {
   // 헤더 드롭다운에서 번역 없는 언어가 정확히 회색 처리된다.
   // 넘기지 않으면(홈/카테고리 목록 등) 전체 언어를 사용 가능한 것으로 간주.
   availableLangs?: Locale[];
+  // 글 상세 페이지 전용: 언어별 실제 slug 매핑. HeaderLangSwitcher로 그대로 전달되어
+  // "translationKey는 같은데 파일명(slug)이 언어마다 다른" 글에서도 언어전환 링크가
+  // 정확한 주소로 연결되게 한다 (없으면 언어 코드만 바꾸는 기존 방식으로 폴백).
+  slugOverrides?: Partial<Record<Locale, string>>;
   // true면 좌측에 인기글 사이드바를 배치한다 (데스크탑: sticky 사이드바 / 모바일: 본문 하단).
   // 글 상세 페이지에서만 켜고, 홈/카테고리 목록 페이지는 기본값(false)으로 둔다.
   showSidebar?: boolean;
 }
-const { title, description = 'deaf52 · IT & humanities', availableLangs, showSidebar = false } = Astro.props;
+const {
+  title,
+  description = 'deaf52 · IT & humanities',
+  availableLangs,
+  slugOverrides,
+  showSidebar = false,
+} = Astro.props;
 
 const currentPath = Astro.url.pathname;
 const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.split('/')[1])
@@ -66,7 +76,12 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
       <span class="site-subtitle">IT &amp; humanities</span>
     </a>
     <nav class="site-nav">
-      <HeaderLangSwitcher currentLang={currentLang} currentPath={currentPath} availableLangs={availableLangs} />
+      <HeaderLangSwitcher
+        currentLang={currentLang}
+        currentPath={currentPath}
+        availableLangs={availableLangs}
+        slugOverrides={slugOverrides}
+      />
       <SearchBox />
       <a href={`/${currentLang}/it/`}>IT기술</a>
       <a href={`/${currentLang}/humanities/`}>인문학</a>

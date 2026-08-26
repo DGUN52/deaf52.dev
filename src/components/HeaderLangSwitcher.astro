@@ -10,12 +10,33 @@ interface Props {
   // 글 상세 페이지에서는 getTranslations() 결과로 정확히 계산해서 넘겨야 함.
   // 넘기지 않으면(홈/카테고리 목록처럼 특정 글에 종속되지 않는 페이지) 전체 언어를 사용 가능한 것으로 간주.
   availableLangs?: Locale[];
+  // 글 상세 페이지 전용: 언어별 실제 slug 매핑 (translationKey는 같아도 파일명/slug가
+  // 언어마다 다를 수 있어서, 단순히 URL의 언어 코드만 바꾸면 404가 날 수 있음).
+  // 넘기지 않으면(홈/카테고리 목록 등 slug가 없는 페이지) 기존처럼 언어 코드만 교체.
+  slugOverrides?: Partial<Record<Locale, string>>;
 }
 
-const { currentLang, currentPath, availableLangs = LOCALES as unknown as Locale[] } = Astro.props;
+const {
+  currentLang,
+  currentPath,
+  availableLangs = LOCALES as unknown as Locale[],
+  slugOverrides,
+} = Astro.props;
 
 function swapLang(path: string, target: Locale) {
   const rest = path.replace(new RegExp(`^/(${LOCALES.join('|')})`), '');
+
+  const overrideSlug = slugOverrides?.[target];
+  if (overrideSlug) {
+    // rest는 "/it/기존슬러그" 또는 "/it/기존슬러그/" 형태.
+    // 마지막 세그먼트(슬러그)만 그 언어의 실제 slug로 교체하고, 카테고리는 그대로 유지.
+    const segments = rest.split('/').filter(Boolean);
+    if (segments.length >= 2) {
+      segments[segments.length - 1] = overrideSlug;
+      return `/${target}/${segments.join('/')}/`;
+    }
+  }
+
   return `/${target}${rest || '/'}`;
 }
 
