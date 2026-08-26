@@ -1238,10 +1238,10 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   gap: 1.5rem;
 }
 
-/* 좋아요 TOP 칸 제거 후 조회수 TOP만 남는 경우: 절반만 넓게 차지하지 않도록 폭 제한 */
+/* 좋아요 TOP 칸 제거 후 조회수 TOP만 남는 경우: 남는 폭을 억지로 좁히지 않고
+   본문 폭 그대로 사용 (목록 항목의 제목-조회수가 space-between으로 넓게 퍼짐) */
 .popular-grid-single {
   grid-template-columns: minmax(0, 1fr);
-  max-width: 320px;
 }
 
 .popular-col-title {
