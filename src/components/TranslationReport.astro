@@ -402,6 +402,9 @@ const t = DICT[lang] ?? DICT.en;
       });
       if (!res.ok) throw new Error('failed');
       statusEl.textContent = t.success;
+      if (window.dataLayer) {
+        window.dataLayer.push({ event: 'translation_report_submit', slug, lang, issueType });
+      }
       form.reset();
       setTimeout(() => {
         closeModal();

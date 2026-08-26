@@ -104,6 +104,10 @@ const slugOverrides = Object.fromEntries(
         .then((data) => {
           localStorage.setItem(storageKey, nextLiked ? '1' : '0');
           render(nextLiked, data.count);
+          // 좋아요를 누른 경우만 전환 이벤트로 카운트 (취소는 제외)
+          if (nextLiked && window.dataLayer) {
+            window.dataLayer.push({ event: 'post_like', slug });
+          }
         })
         .finally(() => {
           likeBtn.removeAttribute('disabled');
