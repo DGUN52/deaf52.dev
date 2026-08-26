@@ -1,5 +1,5 @@
 ---
-// 인기글 TOP5 (조회수/좋아요 기준). 데스크탑에서는 좌측 sticky 사이드바로,
+// 인기글 TOP5 (조회수 기준). 데스크탑에서는 좌측 sticky 사이드바로,
 // 모바일에서는 CSS로 본문 하단에 재배치된다 (별도 마크업 분기 없이 order로 처리).
 //
 // postMeta: 현재 언어에서 실제로 존재하는 글들의 slug -> {title, category} 매핑.
@@ -24,8 +24,8 @@ for (const p of humanitiesPosts) {
 }
 
 const t = lang === 'ko'
-  ? { popular: '인기 글', views: '조회수 TOP', likes: '좋아요 TOP' }
-  : { popular: 'Popular', views: 'Most viewed', likes: 'Most liked' };
+  ? { popular: '인기 글', views: '조회수 TOP' }
+  : { popular: 'Popular', views: 'Most viewed' };
 ---
 
 <aside class="popular-sidebar">
@@ -35,11 +35,6 @@ const t = lang === 'ko'
     <div class="popular-sidebar-col">
       <p class="popular-col-title">{t.views}</p>
       <ol class="popular-list" id="sidebar-popular-views"></ol>
-    </div>
-
-    <div class="popular-sidebar-col">
-      <p class="popular-col-title">{t.likes}</p>
-      <ol class="popular-list" id="sidebar-popular-likes"></ol>
     </div>
 
     <!-- 나중에 애드센스 등을 추가할 자리 -->
@@ -79,5 +74,4 @@ const t = lang === 'ko'
   }
 
   loadPopular('sidebar-popular-views', 'views');
-  loadPopular('sidebar-popular-likes', 'likes');
 </script>

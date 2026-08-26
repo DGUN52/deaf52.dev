@@ -1180,6 +1180,12 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   gap: 1.5rem;
 }
 
+/* 좋아요 TOP 칸 제거 후 조회수 TOP만 남는 경우: 절반만 넓게 차지하지 않도록 폭 제한 */
+.popular-grid-single {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 320px;
+}
+
 .popular-col-title {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -1253,9 +1259,9 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
 .page-with-sidebar {
   display: flex;
   align-items: flex-start;
-  gap: 2rem;
+  gap: 3rem;
   max-width: 1100px;
-  margin: 0 auto;
+  margin: 1.5rem auto 0;
   padding: 0 clamp(1rem, 3vw, 2rem);
 }
 

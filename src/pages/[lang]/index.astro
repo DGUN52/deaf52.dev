@@ -18,8 +18,8 @@ const humanitiesPosts = (await getCollection('humanities'))
   .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 
 const t = lang === 'ko'
-  ? { it: 'IT기술', itSub: '기술별 기록', humanities: '인문학', humanitiesSub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.', popular: '인기 글', popularViews: '조회수 TOP', popularLikes: '좋아요 TOP' }
-  : { it: 'Tech', itSub: 'notes by technology', humanities: 'Humanities', humanitiesSub: 'reviews, reflections, writing', empty: 'No posts yet.', popular: 'Popular', popularViews: 'Most viewed', popularLikes: 'Most liked' };
+  ? { it: 'IT기술', itSub: '기술별 기록', humanities: '인문학', humanitiesSub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.', popular: '인기 글', popularViews: '조회수 TOP' }
+  : { it: 'Tech', itSub: 'notes by technology', humanities: 'Humanities', humanitiesSub: 'reviews, reflections, writing', empty: 'No posts yet.', popular: 'Popular', popularViews: 'Most viewed' };
 
 const subcategoryLabel: Record<string, string> = {
   review: lang === 'ko' ? '리뷰' : 'review',
@@ -45,14 +45,10 @@ for (const p of humanitiesPosts) {
       <span class="marker">★</span>
       <h2>{t.popular}</h2>
     </div>
-    <div class="popular-grid">
+    <div class="popular-grid popular-grid-single">
       <div class="popular-col">
         <p class="popular-col-title">{t.popularViews}</p>
         <ol class="popular-list" id="popular-views" data-metric="views"></ol>
-      </div>
-      <div class="popular-col">
-        <p class="popular-col-title">{t.popularLikes}</p>
-        <ol class="popular-list" id="popular-likes" data-metric="likes"></ol>
       </div>
     </div>
   </section>
@@ -131,5 +127,4 @@ for (const p of humanitiesPosts) {
   }
 
   loadPopular('popular-views', 'views');
-  loadPopular('popular-likes', 'likes');
 </script>
