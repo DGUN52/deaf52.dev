@@ -83,10 +83,19 @@ button:focus-visible {
 
 .site-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem 1.5rem;
   font-family: var(--font-mono);
   font-size: 0.85rem;
+}
+
+.site-nav a {
+  white-space: nowrap;
+}
+
+.lang-label-short {
+  display: none;
 }
 
 /* ---------- Header lang switcher: flag boxes ---------- */
@@ -394,8 +403,18 @@ button:focus-visible {
 }
 
 .post-list.it .tags {
-  color: var(--ink-soft);
-  font-size: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.tag-pill {
+  display: inline-block;
+  background: var(--tech-soft);
+  color: var(--tech);
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.72rem;
   white-space: nowrap;
 }
 
@@ -601,6 +620,30 @@ button:focus-visible {
   margin: 1rem 0;
 }
 
+/* 표는 감싸는 요소 없이 넓게 렌더링될 수 있어 좁은 화면에서 페이지 전체가
+   가로로 밀리는 문제를 막기 위해 표 자체만 가로 스크롤되도록 처리 */
+.post-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.post-body th,
+.post-body td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.post-body th {
+  background: var(--paper-deep);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
 .post-body a {
   color: var(--tech);
   text-decoration-color: var(--line);
@@ -797,10 +840,25 @@ button:focus-visible {
   }
   .post-list.it .tags {
     grid-column: 2 / -1;
-    white-space: normal;
   }
   .post-title {
     font-size: 1.5rem;
+  }
+
+  /* 좁은 화면에서는 언어명 전체 텍스트 대신 2글자 코드로 축소 (줄바꿈 방지) */
+  .lang-label-full {
+    display: none;
+  }
+  .lang-label-short {
+    display: inline;
+  }
+
+  /* 드롭다운 버튼이 화면 왼쪽 끝 근처에 있을 때 메뉴가 오른쪽 정렬(right:0)로
+     열리면 왼쪽으로 화면 밖까지 늘어나므로, 좁은 화면에서는 왼쪽 정렬로 연다 */
+  .lang-dropdown-menu {
+    left: 0;
+    right: auto;
+    min-width: 140px;
   }
 }
 

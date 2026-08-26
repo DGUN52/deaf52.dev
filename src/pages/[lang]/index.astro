@@ -68,7 +68,9 @@ for (const p of humanitiesPosts) {
           <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
             {post.data.title}
           </a>
-          <span class="tags">{post.data.tech.join(' / ')}</span>
+          <span class="tags">
+            {post.data.tech.map((t) => <span class="tag-pill">{t}</span>)}
+          </span>
         </li>
       ))}
     </ul>

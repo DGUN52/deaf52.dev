@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { LOCALES, LOCALE_PREFIX_RE } from '../../../i18n/utils';
+import { formatDate } from '../../../i18n/formatDate';
 
 export function getStaticPaths() {
   return LOCALES.map((lang) => ({ params: { lang } }));
@@ -51,7 +52,9 @@ posts.forEach(p => {
               <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                 {post.data.title}
               </a>
-              <span class="tags">{post.data.tech.join(' / ')}</span>
+              <span class="tags">
+                {post.data.tech.map((t) => <span class="tag-pill">{t}</span>)}
+              </span>
             </li>
           ))}
         </ul>
@@ -68,7 +71,7 @@ posts.forEach(p => {
                   <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                     {post.data.title}
                   </a>
-                  <span class="tags">{post.data.publishedAt.toLocaleDateString()}</span>
+                  <span class="tags">{formatDate(post.data.publishedAt, post.data.lang)}</span>
                 </li>
               ))}
             </ul>

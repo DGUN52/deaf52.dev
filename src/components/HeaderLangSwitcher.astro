@@ -48,7 +48,8 @@ function flagUrl(code: Locale) {
     aria-expanded="false"
   >
     <span class="flag-wrapper"><img src={flagUrl(currentLang)} alt="" class="flag-img" loading="eager" /></span>
-    <span>{LOCALE_LABELS[currentLang]}</span>
+    <span class="lang-label-full">{LOCALE_LABELS[currentLang]}</span>
+    <span class="lang-label-short">{currentLang.toUpperCase()}</span>
     <span class="arrow" aria-hidden="true">▾</span>
   </button>
 
