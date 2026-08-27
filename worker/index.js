@@ -14,6 +14,23 @@
 //
 // 번역 신고는 KV에 "report:{timestamp}:{random}" 키로 각각 저장되며(리스트 형태),
 // 관리자가 나중에 KV 목록을 훑어서 확인하는 방식이다 (별도 관리자 UI는 아직 없음).
+//
+// 쿠키 동의(Consent Mode) 지역별 기본값을 위해, HTML 응답에는 Cloudflare가 요청마다
+// 정확히 알려주는 방문자 국가 코드(request.cf.country)를 <head> 맨 앞에 인라인 스크립트로
+// 심어준다. 클라이언트(BaseLayout의 consent 기본값 스크립트)가 이 값을 읽어서
+// GDPR/EEA 권역 방문자에게만 기본값을 "거부"로 적용한다.
+
+class CountryInjector {
+  constructor(country) {
+    this.country = country;
+  }
+  element(el) {
+    el.prepend(
+      `<script>window.__CF_COUNTRY__=${JSON.stringify(this.country || '')};</script>`,
+      { html: true }
+    );
+  }
+}
 
 export default {
   async fetch(request, env) {
@@ -25,7 +42,12 @@ export default {
       !url.pathname.startsWith('/api/report/') &&
       !url.pathname.startsWith('/api/ranking')
     ) {
-      return env.ASSETS.fetch(request);
+      const response = await env.ASSETS.fetch(request);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/html')) return response;
+
+      const country = request.cf && request.cf.country; // 예: "DE", "KR" (알 수 없으면 undefined)
+      return new HTMLRewriter().on('head', new CountryInjector(country)).transform(response);
     }
 
     // ---------- 조회수 (기존) ----------
