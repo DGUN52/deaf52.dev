@@ -737,6 +737,47 @@ button:focus-visible {
   text-decoration-color: var(--human);
 }
 
+/* ---------- Privacy policy page ---------- */
+.privacy-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-bottom: 3rem;
+}
+
+.privacy-page h1 {
+  font-size: 1.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.privacy-updated {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.5rem;
+}
+
+.privacy-intro {
+  color: var(--ink-soft);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.privacy-section {
+  margin-bottom: 1.75rem;
+}
+
+.privacy-section h2 {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+}
+
+.privacy-section p {
+  line-height: 1.7;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+  word-break: break-word;
+}
+
 /* ---------- Nav category (hover indicator) ---------- */
 .site-nav .nav-category {
   position: relative;

@@ -1,0 +1,481 @@
+---
+// 개인정보처리방침 (Privacy Policy) — AdSense 신청 요건 + 일반 법적 고지 목적.
+// 이 사이트가 실제로 수집/사용하는 데이터만 정확히 기술한다:
+// GA4/GTM 방문 통계, Cloudflare Worker/KV 조회수·좋아요 카운터, localStorage(동의 상태·좋아요 상태),
+// 번역 신고 API(/api/report/translation), Ko-fi 외부 링크, 문의 이메일.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { LOCALES, type Locale } from '../../i18n/utils';
+
+export function getStaticPaths() {
+  return LOCALES.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params as { lang: Locale };
+
+type Section = { heading: string; body: string[] };
+type Dict = {
+  title: string;
+  updated: string;
+  intro: string;
+  sections: Section[];
+};
+
+const DICT: Record<Locale, Dict> = {
+  ko: {
+    title: '개인정보처리방침',
+    updated: '최종 수정일: 2026년 8월 28일',
+    intro:
+      'deaf52.dev(이하 "사이트")는 방문자의 개인정보를 소중히 여기며, 아래와 같은 방식으로 데이터를 수집·이용합니다. 별도의 회원가입·로그인 기능은 없으며, 이름·주소·결제 정보 등을 직접 수집하지 않습니다.',
+    sections: [
+      {
+        heading: '1. 수집하는 정보와 방법',
+        body: [
+          'Google Analytics 4(GTM 컨테이너 경유)를 통해 페이지 조회, 클릭 등 방문 통계를 수집합니다. 이 데이터는 개별 방문자를 특정하지 않는 형태로 Google에 전송·처리됩니다.',
+          '사이트 자체 기능으로, Cloudflare Worker와 KV 저장소를 이용해 "사이트 전체 방문 수"와 "글별 조회수", "글별 좋아요 수"를 집계합니다. 이 수치는 개인을 식별하지 않는 단순 카운터입니다.',
+        ],
+      },
+      {
+        heading: '2. 쿠키 및 로컬 스토리지',
+        body: [
+          '사이트는 브라우저의 로컬 스토리지(localStorage)에 다음 정보를 저장합니다: (1) 쿠키 동의 여부(cookie_consent), (2) 이용자가 좋아요를 누른 글 목록. 이 정보는 이용자의 브라우저에만 저장되며 서버로 전송되지 않습니다.',
+          '유럽경제지역(EEA)·영국·스위스에서 접속한 경우 Google Consent Mode에 따라 분석용 쿠키 저장 기본값이 "거부"로 설정되며, 화면 하단 배너에서 동의 여부를 직접 선택할 수 있습니다. 그 외 지역은 기본값이 "허용"이며, 언제든 배너를 통해 변경할 수 있습니다.',
+        ],
+      },
+      {
+        heading: '3. 제3자 서비스',
+        body: [
+          '이 사이트는 Google Analytics 및 Google Tag Manager를 이용합니다. 관련 처리 방침은 Google의 개인정보처리방침(https://policies.google.com/privacy)에서 확인할 수 있습니다.',
+          '후원 링크(Ko-fi)를 통해 외부 사이트로 이동할 수 있으며, 결제 정보는 해당 사이트(Ko-fi)가 직접 처리하고 이 사이트는 결제 정보를 수집·보관하지 않습니다. 클릭 시 이벤트 발생 사실만 통계 목적으로 기록됩니다.',
+        ],
+      },
+      {
+        heading: '4. 번역 신고 기능',
+        body: [
+          '글 번역에 대한 신고를 남기면, 신고 대상 글의 slug, 언어, 신고 유형, 선택적으로 남긴 코멘트가 서버에 저장됩니다. 이는 번역 품질 개선 목적으로만 사용되며, 신고자의 개인 식별 정보는 수집하지 않습니다.',
+        ],
+      },
+      {
+        heading: '5. 데이터 보관 및 삭제',
+        body: [
+          '위 통계·카운터 데이터는 별도 삭제 요청이 없는 한 서비스 운영 목적으로 계속 보관됩니다. 로컬 스토리지에 저장된 정보는 이용자가 브라우저 설정에서 언제든 직접 삭제할 수 있습니다.',
+        ],
+      },
+      {
+        heading: '6. 문의',
+        body: ['개인정보 처리에 관해 문의하실 사항이 있으면 아래 이메일로 연락해 주세요: deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. 방침 변경',
+        body: ['이 방침은 필요에 따라 변경될 수 있으며, 변경 시 이 페이지를 통해 고지합니다.'],
+      },
+    ],
+  },
+  en: {
+    title: 'Privacy Policy',
+    updated: 'Last updated: August 28, 2026',
+    intro:
+      'deaf52.dev (the "Site") values your privacy. The Site has no account/login system and does not directly collect names, addresses, or payment information. Below is how data is collected and used.',
+    sections: [
+      {
+        heading: '1. Information We Collect',
+        body: [
+          'We use Google Analytics 4 (via Google Tag Manager) to collect visit statistics such as page views and clicks. This data is transmitted to and processed by Google in a form that does not directly identify individual visitors.',
+          'A self-hosted feature using a Cloudflare Worker and KV storage tallies site-wide visit counts, per-post view counts, and per-post like counts. These are simple counters that do not identify individuals.',
+        ],
+      },
+      {
+        heading: '2. Cookies and Local Storage',
+        body: [
+          'The Site stores the following in your browser\'s localStorage: (1) your cookie consent choice (cookie_consent), and (2) the list of posts you have liked. This information stays in your browser and is never sent to our servers.',
+          'For visitors in the EEA, UK, or Switzerland, Google Consent Mode defaults analytics cookie storage to "denied" until you choose otherwise via the banner at the bottom of the page. For other regions the default is "granted," and you may change this at any time via the banner.',
+        ],
+      },
+      {
+        heading: '3. Third-Party Services',
+        body: [
+          'This Site uses Google Analytics and Google Tag Manager. See Google\'s Privacy Policy for details: https://policies.google.com/privacy.',
+          'A donation link (Ko-fi) may take you to an external site. Payment information is handled entirely by Ko-fi; this Site never collects or stores payment details. Only the fact that the link was clicked is recorded for statistics.',
+        ],
+      },
+      {
+        heading: '4. Translation Report Feature',
+        body: [
+          'When you submit a translation report, the post slug, language, issue type, and any optional comment you provide are stored on our server. This is used solely to improve translation quality and does not collect any personally identifying information about you.',
+        ],
+      },
+      {
+        heading: '5. Data Retention and Deletion',
+        body: [
+          'The statistics and counters above are retained for as long as needed to operate the Site, unless a deletion request is made. Information stored in localStorage can be deleted at any time from your browser settings.',
+        ],
+      },
+      {
+        heading: '6. Contact',
+        body: ['If you have questions about how your data is handled, please contact: deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. Changes to This Policy',
+        body: ['This policy may be updated from time to time. Any changes will be posted on this page.'],
+      },
+    ],
+  },
+  ja: {
+    title: 'プライバシーポリシー',
+    updated: '最終更新日：2026年8月28日',
+    intro:
+      'deaf52.dev（以下「本サイト」）は訪問者のプライバシーを尊重します。本サイトには会員登録・ログイン機能はなく、氏名・住所・決済情報を直接収集することはありません。以下は本サイトによるデータの収集・利用方法です。',
+    sections: [
+      {
+        heading: '1. 収集する情報と方法',
+        body: [
+          'Google Tag Manager経由でGoogle Analytics 4を利用し、ページビューやクリックなどの訪問統計を収集します。このデータは個々の訪問者を特定しない形でGoogleに送信・処理されます。',
+          '本サイト独自の機能として、Cloudflare WorkerとKVストレージを用いてサイト全体の訪問数、記事ごとの閲覧数、記事ごとのいいね数を集計します。これらは個人を識別しない単純なカウンターです。',
+        ],
+      },
+      {
+        heading: '2. Cookieとローカルストレージ',
+        body: [
+          '本サイトはブラウザのlocalStorageに次の情報を保存します：（1）Cookie同意の選択（cookie_consent）、（2）いいねした記事の一覧。これらはブラウザ内にのみ保存され、サーバーには送信されません。',
+          '欧州経済領域（EEA）・英国・スイスからのアクセスの場合、Google Consent Modeにより分析用Cookieの保存はデフォルトで「拒否」となり、画面下部のバナーから同意の選択が可能です。その他の地域はデフォルトで「許可」となり、バナーからいつでも変更できます。',
+        ],
+      },
+      {
+        heading: '3. 第三者サービス',
+        body: [
+          '本サイトはGoogle AnalyticsおよびGoogle Tag Managerを使用しています。詳細はGoogleのプライバシーポリシー（https://policies.google.com/privacy）をご確認ください。',
+          '寄付リンク（Ko-fi）から外部サイトに移動する場合があります。決済情報はKo-fiが直接処理し、本サイトが決済情報を収集・保存することはありません。クリックされた事実のみ統計目的で記録されます。',
+        ],
+      },
+      {
+        heading: '4. 翻訳報告機能',
+        body: [
+          '翻訳に関する報告を送信すると、対象記事のslug、言語、問題の種類、任意で入力したコメントがサーバーに保存されます。これは翻訳品質向上の目的にのみ使用され、報告者を個人として識別する情報は収集しません。',
+        ],
+      },
+      {
+        heading: '5. データの保管と削除',
+        body: [
+          '上記の統計・カウンターデータは、削除要請がない限りサービス運営目的で保管されます。localStorageに保存された情報は、ブラウザ設定からいつでも削除できます。',
+        ],
+      },
+      {
+        heading: '6. お問い合わせ',
+        body: ['個人情報の取り扱いに関するお問い合わせは下記メールまでご連絡ください：deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. 方針の変更',
+        body: ['本方針は必要に応じて変更されることがあります。変更時は本ページで告知します。'],
+      },
+    ],
+  },
+  zh: {
+    title: '隐私政策',
+    updated: '最后更新：2026年8月28日',
+    intro:
+      'deaf52.dev（以下简称"本网站"）重视访问者的隐私。本网站没有会员注册或登录功能，也不会直接收集姓名、地址或支付信息。以下说明本网站收集和使用数据的方式。',
+    sections: [
+      {
+        heading: '1. 收集的信息及方式',
+        body: [
+          '本网站通过 Google Tag Manager 使用 Google Analytics 4 收集页面浏览、点击等访问统计信息。此数据以不直接识别单个访问者的形式发送并由 Google 处理。',
+          '本网站自建功能使用 Cloudflare Worker 和 KV 存储统计网站总访问量、各文章浏览量及点赞数。这些仅为不识别个人的简单计数。',
+        ],
+      },
+      {
+        heading: '2. Cookie 与本地存储',
+        body: [
+          '本网站会在浏览器的 localStorage 中保存以下信息：（1）Cookie 同意状态（cookie_consent），（2）已点赞文章列表。这些信息仅保存在您的浏览器中，不会发送至服务器。',
+          '对于来自欧洲经济区（EEA）、英国或瑞士的访问者，根据 Google Consent Mode，分析类 Cookie 的默认状态为"拒绝"，您可通过页面底部的横幅自行选择。其他地区默认状态为"同意"，同样可随时通过横幅更改。',
+        ],
+      },
+      {
+        heading: '3. 第三方服务',
+        body: [
+          '本网站使用 Google Analytics 和 Google Tag Manager，详情请参阅 Google 隐私政策：https://policies.google.com/privacy。',
+          '通过赞助链接（Ko-fi）可能跳转至外部网站，支付信息完全由 Ko-fi 处理，本网站不会收集或存储支付信息，仅出于统计目的记录点击事件。',
+        ],
+      },
+      {
+        heading: '4. 翻译报告功能',
+        body: [
+          '提交翻译报告时，系统会保存该文章的 slug、语言、问题类型以及您选填的备注。此信息仅用于改进翻译质量，不会收集任何可识别报告者身份的信息。',
+        ],
+      },
+      {
+        heading: '5. 数据保留与删除',
+        body: [
+          '上述统计与计数数据将在无删除请求的情况下持续保留以维持网站运营。保存在 localStorage 中的信息可随时通过浏览器设置删除。',
+        ],
+      },
+      {
+        heading: '6. 联系方式',
+        body: ['如对数据处理方式有任何疑问，请联系：deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. 政策变更',
+        body: ['本政策可能会不时更新，任何变更都将在本页面公布。'],
+      },
+    ],
+  },
+  in: {
+    title: 'गोपनीयता नीति',
+    updated: 'अंतिम अद्यतन: 28 अगस्त 2026',
+    intro:
+      'deaf52.dev ("साइट") आपकी गोपनीयता का सम्मान करती है। इस साइट पर कोई खाता/लॉगिन प्रणाली नहीं है और यह सीधे नाम, पता या भुगतान जानकारी एकत्र नहीं करती। नीचे बताया गया है कि डेटा कैसे एकत्र और उपयोग किया जाता है।',
+    sections: [
+      {
+        heading: '1. एकत्रित जानकारी और तरीका',
+        body: [
+          'हम Google Tag Manager के माध्यम से Google Analytics 4 का उपयोग करके पेज व्यू, क्लिक जैसे विज़िट आँकड़े एकत्र करते हैं। यह डेटा किसी व्यक्तिगत विज़िटर की पहचान किए बिना Google को भेजा और संसाधित किया जाता है।',
+          'Cloudflare Worker और KV स्टोरेज का उपयोग करने वाली एक स्व-निर्मित सुविधा साइट-व्यापी विज़िट संख्या, प्रति-पोस्ट व्यू संख्या और प्रति-पोस्ट लाइक संख्या की गणना करती है। ये केवल सरल काउंटर हैं जो व्यक्तियों की पहचान नहीं करते।',
+        ],
+      },
+      {
+        heading: '2. कुकीज़ और लोकल स्टोरेज',
+        body: [
+          'साइट आपके ब्राउज़र के localStorage में निम्न जानकारी संग्रहीत करती है: (1) आपकी कुकी सहमति पसंद (cookie_consent), और (2) आपके द्वारा पसंद किए गए पोस्ट की सूची। यह जानकारी केवल आपके ब्राउज़र में रहती है और कभी हमारे सर्वर पर नहीं भेजी जाती।',
+          'EEA, UK या स्विट्ज़रलैंड के विज़िटरों के लिए, Google Consent Mode एनालिटिक्स कुकी स्टोरेज को डिफ़ॉल्ट रूप से "अस्वीकृत" रखता है जब तक आप पेज के नीचे बैनर के माध्यम से अन्यथा चयन नहीं करते। अन्य क्षेत्रों के लिए डिफ़ॉल्ट "स्वीकृत" है, जिसे आप कभी भी बैनर से बदल सकते हैं।',
+        ],
+      },
+      {
+        heading: '3. तृतीय-पक्ष सेवाएं',
+        body: [
+          'यह साइट Google Analytics और Google Tag Manager का उपयोग करती है। विवरण के लिए Google की गोपनीयता नीति देखें: https://policies.google.com/privacy।',
+          'एक दान लिंक (Ko-fi) आपको बाहरी साइट पर ले जा सकता है। भुगतान जानकारी पूरी तरह से Ko-fi द्वारा संभाली जाती है; यह साइट कभी भी भुगतान विवरण एकत्र या संग्रहीत नहीं करती। केवल लिंक क्लिक किए जाने का तथ्य आँकड़ों के लिए दर्ज किया जाता है।',
+        ],
+      },
+      {
+        heading: '4. अनुवाद रिपोर्ट सुविधा',
+        body: [
+          'जब आप अनुवाद रिपोर्ट सबमिट करते हैं, तो पोस्ट का slug, भाषा, समस्या का प्रकार, और आपके द्वारा दी गई कोई भी वैकल्पिक टिप्पणी हमारे सर्वर पर संग्रहीत की जाती है। इसका उपयोग केवल अनुवाद गुणवत्ता सुधारने के लिए किया जाता है और यह आपकी कोई व्यक्तिगत पहचान जानकारी एकत्र नहीं करता।',
+        ],
+      },
+      {
+        heading: '5. डेटा प्रतिधारण और विलोपन',
+        body: [
+          'उपरोक्त आँकड़े और काउंटर डेटा को हटाने के अनुरोध के अभाव में साइट संचालन के लिए बनाए रखा जाता है। localStorage में संग्रहीत जानकारी को आप कभी भी अपनी ब्राउज़र सेटिंग्स से हटा सकते हैं।',
+        ],
+      },
+      {
+        heading: '6. संपर्क करें',
+        body: ['डेटा प्रबंधन के बारे में प्रश्नों के लिए कृपया संपर्क करें: deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. नीति में परिवर्तन',
+        body: ['यह नीति समय-समय पर अपडेट हो सकती है। कोई भी परिवर्तन इस पेज पर पोस्ट किया जाएगा।'],
+      },
+    ],
+  },
+  de: {
+    title: 'Datenschutzerklärung',
+    updated: 'Zuletzt aktualisiert: 28. August 2026',
+    intro:
+      'deaf52.dev (die "Website") respektiert Ihre Privatsphäre. Die Website verfügt über kein Konto-/Login-System und erhebt keine direkten Angaben wie Namen, Adressen oder Zahlungsinformationen. Im Folgenden wird beschrieben, wie Daten erhoben und verwendet werden.',
+    sections: [
+      {
+        heading: '1. Erhobene Informationen und Methoden',
+        body: [
+          'Wir verwenden Google Analytics 4 (über Google Tag Manager), um Besuchsstatistiken wie Seitenaufrufe und Klicks zu erfassen. Diese Daten werden in einer Form an Google übermittelt und verarbeitet, die einzelne Besucher nicht direkt identifiziert.',
+          'Eine selbst gehostete Funktion mit Cloudflare Worker und KV-Speicher zählt die gesamten Website-Besuche, Aufrufe pro Beitrag und Likes pro Beitrag. Dies sind einfache Zähler ohne Personenbezug.',
+        ],
+      },
+      {
+        heading: '2. Cookies und lokaler Speicher',
+        body: [
+          'Die Website speichert Folgendes im localStorage Ihres Browsers: (1) Ihre Cookie-Einwilligung (cookie_consent) und (2) die Liste der von Ihnen mit "Gefällt mir" markierten Beiträge. Diese Informationen verbleiben in Ihrem Browser und werden niemals an unsere Server gesendet.',
+          'Für Besucher aus dem EWR, dem Vereinigten Königreich oder der Schweiz setzt der Google Consent Mode die Speicherung von Analyse-Cookies standardmäßig auf "abgelehnt", bis Sie über das Banner am unteren Bildschirmrand eine andere Wahl treffen. In anderen Regionen ist der Standard "erlaubt", was Sie jederzeit über das Banner ändern können.',
+        ],
+      },
+      {
+        heading: '3. Drittanbieterdienste',
+        body: [
+          'Diese Website nutzt Google Analytics und Google Tag Manager. Details finden Sie in der Datenschutzerklärung von Google: https://policies.google.com/privacy.',
+          'Ein Spendenlink (Ko-fi) kann Sie auf eine externe Website weiterleiten. Zahlungsinformationen werden ausschließlich von Ko-fi verarbeitet; diese Website erhebt oder speichert niemals Zahlungsdaten. Es wird lediglich erfasst, dass der Link angeklickt wurde, zu statistischen Zwecken.',
+        ],
+      },
+      {
+        heading: '4. Übersetzungsmeldungen',
+        body: [
+          'Wenn Sie eine Übersetzungsmeldung einreichen, werden der Slug des Beitrags, die Sprache, die Art des Problems und ein optionaler Kommentar auf unserem Server gespeichert. Dies dient ausschließlich der Verbesserung der Übersetzungsqualität und erfasst keine personenbezogenen Daten über Sie.',
+        ],
+      },
+      {
+        heading: '5. Datenspeicherung und Löschung',
+        body: [
+          'Die oben genannten Statistik- und Zählerdaten werden für den Betrieb der Website aufbewahrt, sofern kein Löschantrag gestellt wird. Im localStorage gespeicherte Informationen können Sie jederzeit über Ihre Browsereinstellungen löschen.',
+        ],
+      },
+      {
+        heading: '6. Kontakt',
+        body: ['Bei Fragen zur Datenverarbeitung kontaktieren Sie bitte: deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. Änderungen dieser Richtlinie',
+        body: ['Diese Richtlinie kann von Zeit zu Zeit aktualisiert werden. Änderungen werden auf dieser Seite veröffentlicht.'],
+      },
+    ],
+  },
+  uk: {
+    title: 'Privacy Policy',
+    updated: 'Last updated: August 28, 2026',
+    intro:
+      'deaf52.dev (the "Site") values your privacy. The Site has no account/login system and does not directly collect names, addresses, or payment information. Below is how data is collected and used.',
+    sections: [
+      {
+        heading: '1. Information We Collect',
+        body: [
+          'We use Google Analytics 4 (via Google Tag Manager) to collect visit statistics such as page views and clicks. This data is transmitted to and processed by Google in a form that does not directly identify individual visitors.',
+          'A self-hosted feature using a Cloudflare Worker and KV storage tallies site-wide visit counts, per-post view counts, and per-post like counts. These are simple counters that do not identify individuals.',
+        ],
+      },
+      {
+        heading: '2. Cookies and Local Storage',
+        body: [
+          'The Site stores the following in your browser\'s localStorage: (1) your cookie consent choice (cookie_consent), and (2) the list of posts you have liked. This information stays in your browser and is never sent to our servers.',
+          'For visitors in the EEA, UK, or Switzerland, Google Consent Mode defaults analytics cookie storage to "denied" until you choose otherwise via the banner at the bottom of the page. For other regions the default is "granted," and you may change this at any time via the banner.',
+        ],
+      },
+      {
+        heading: '3. Third-Party Services',
+        body: [
+          'This Site uses Google Analytics and Google Tag Manager. See Google\'s Privacy Policy for details: https://policies.google.com/privacy.',
+          'A donation link (Ko-fi) may take you to an external site. Payment information is handled entirely by Ko-fi; this Site never collects or stores payment details. Only the fact that the link was clicked is recorded for statistics.',
+        ],
+      },
+      {
+        heading: '4. Translation Report Feature',
+        body: [
+          'When you submit a translation report, the post slug, language, issue type, and any optional comment you provide are stored on our server. This is used solely to improve translation quality and does not collect any personally identifying information about you.',
+        ],
+      },
+      {
+        heading: '5. Data Retention and Deletion',
+        body: [
+          'The statistics and counters above are retained for as long as needed to operate the Site, unless a deletion request is made. Information stored in localStorage can be deleted at any time from your browser settings.',
+        ],
+      },
+      {
+        heading: '6. Contact',
+        body: ['If you have questions about how your data is handled, please contact: deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. Changes to This Policy',
+        body: ['This policy may be updated from time to time. Any changes will be posted on this page.'],
+      },
+    ],
+  },
+  il: {
+    title: 'מדיניות פרטיות',
+    updated: 'עדכון אחרון: 28 באוגוסט 2026',
+    intro:
+      'deaf52.dev (״האתר״) מכבד את פרטיותכם. אין באתר מערכת הרשמה/התחברות, והוא אינו אוסף באופן ישיר שם, כתובת או פרטי תשלום. להלן אופן איסוף ושימוש הנתונים.',
+    sections: [
+      {
+        heading: '1. מידע שנאסף ואופן האיסוף',
+        body: [
+          'אנו משתמשים ב-Google Analytics 4 (דרך Google Tag Manager) לאיסוף נתוני ביקור כגון צפיות בדפים ולחיצות. נתונים אלו מועברים ומעובדים על ידי Google בצורה שאינה מזהה ישירות מבקרים בודדים.',
+          'תכונה עצמאית המשתמשת ב-Cloudflare Worker ואחסון KV סופרת את מספר הביקורים הכולל באתר, צפיות לכל פוסט ולייקים לכל פוסט. אלו מונים פשוטים בלבד שאינם מזהים אנשים.',
+        ],
+      },
+      {
+        heading: '2. עוגיות ואחסון מקומי',
+        body: [
+          'האתר שומר את המידע הבא ב-localStorage של הדפדפן שלכם: (1) בחירת ההסכמה לעוגיות שלכם (cookie_consent), ו-(2) רשימת הפוסטים שסימנתם כ"אהבתי". מידע זה נשאר בדפדפן שלכם בלבד ואינו נשלח לשרתים שלנו.',
+          'עבור מבקרים מ-EEA, בריטניה או שווייץ, מצב ההסכמה של Google (Consent Mode) מגדיר כברירת מחדל "נדחה" עד שתבחרו אחרת דרך הבאנר בתחתית הדף. באזורים אחרים ברירת המחדל היא "אושר", וניתן לשנות זאת בכל עת דרך הבאנר.',
+        ],
+      },
+      {
+        heading: '3. שירותי צד שלישי',
+        body: [
+          'אתר זה משתמש ב-Google Analytics וב-Google Tag Manager. לפרטים ראו את מדיניות הפרטיות של Google: https://policies.google.com/privacy.',
+          'קישור תרומה (Ko-fi) עשוי להוביל אתכם לאתר חיצוני. פרטי התשלום מטופלים במלואם על ידי Ko-fi; אתר זה אינו אוסף או שומר פרטי תשלום. רק עובדת הלחיצה על הקישור נרשמת למטרות סטטיסטיות.',
+        ],
+      },
+      {
+        heading: '4. תכונת דיווח על תרגום',
+        body: [
+          'כאשר אתם שולחים דיווח על תרגום, ה-slug של הפוסט, השפה, סוג הבעיה, וכל הערה אופציונלית שתספקו נשמרים בשרת שלנו. הדבר משמש אך ורק לשיפור איכות התרגום ואינו אוסף מידע מזהה אישית עליכם.',
+        ],
+      },
+      {
+        heading: '5. שמירת נתונים ומחיקה',
+        body: [
+          'נתוני הסטטיסטיקה והמונים לעיל נשמרים לצורך תפעול האתר, אלא אם התקבלה בקשת מחיקה. מידע השמור ב-localStorage ניתן למחוק בכל עת דרך הגדרות הדפדפן שלכם.',
+        ],
+      },
+      {
+        heading: '6. יצירת קשר',
+        body: ['לשאלות בנוגע לטיפול בנתונים, אנא צרו קשר: deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. שינויים במדיניות זו',
+        body: ['מדיניות זו עשויה להתעדכן מעת לעת. כל שינוי יפורסם בעמוד זה.'],
+      },
+    ],
+  },
+  tw: {
+    title: '隱私權政策',
+    updated: '最後更新：2026年8月28日',
+    intro:
+      'deaf52.dev（以下稱「本網站」）重視訪客的隱私。本網站沒有會員註冊或登入功能，也不會直接收集姓名、地址或付款資訊。以下說明本網站收集及使用資料的方式。',
+    sections: [
+      {
+        heading: '1. 收集的資訊及方式',
+        body: [
+          '本網站透過 Google Tag Manager 使用 Google Analytics 4 收集頁面瀏覽、點擊等訪問統計資訊。此資料以不直接識別個別訪客的形式傳送並由 Google 處理。',
+          '本網站自建功能使用 Cloudflare Worker 與 KV 儲存空間統計網站總訪問次數、各文章瀏覽次數及按讚數。這些僅為不識別個人的簡單計數器。',
+        ],
+      },
+      {
+        heading: '2. Cookie 與本機儲存',
+        body: [
+          '本網站會在瀏覽器的 localStorage 中儲存以下資訊：（1）Cookie 同意狀態（cookie_consent），（2）已按讚文章清單。這些資訊僅儲存於您的瀏覽器中，不會傳送至伺服器。',
+          '對於來自歐洲經濟區（EEA）、英國或瑞士的訪客，依 Google Consent Mode，分析類 Cookie 預設狀態為「拒絕」，您可透過頁面底部橫幅自行選擇。其他地區預設為「同意」，同樣可隨時透過橫幅變更。',
+        ],
+      },
+      {
+        heading: '3. 第三方服務',
+        body: [
+          '本網站使用 Google Analytics 與 Google Tag Manager，詳情請參閱 Google 隱私權政策：https://policies.google.com/privacy。',
+          '透過贊助連結（Ko-fi）可能會跳轉至外部網站，付款資訊完全由 Ko-fi 處理，本網站不會收集或儲存付款資訊，僅出於統計目的記錄點擊事件。',
+        ],
+      },
+      {
+        heading: '4. 翻譯回報功能',
+        body: [
+          '提交翻譯回報時，系統會儲存該文章的 slug、語言、問題類型以及您選填的備註。此資訊僅用於改善翻譯品質，不會收集任何可識別回報者身分的資訊。',
+        ],
+      },
+      {
+        heading: '5. 資料保存與刪除',
+        body: [
+          '上述統計與計數器資料將在無刪除請求的情況下持續保存以維持網站營運。儲存於 localStorage 的資訊可隨時透過瀏覽器設定刪除。',
+        ],
+      },
+      {
+        heading: '6. 聯絡方式',
+        body: ['如對資料處理方式有任何疑問，請聯絡：deaf525252@gmail.com'],
+      },
+      {
+        heading: '7. 政策變更',
+        body: ['本政策可能會不時更新，任何變更皆將於本頁面公布。'],
+      },
+    ],
+  },
+};
+
+const t = DICT[lang] ?? DICT.en;
+---
+
+<BaseLayout title={t.title}>
+  <article class="privacy-page" dir={lang === 'il' ? 'rtl' : 'ltr'}>
+    <h1>{t.title}</h1>
+    <p class="privacy-updated">{t.updated}</p>
+    <p class="privacy-intro">{t.intro}</p>
+    {t.sections.map((s) => (
+      <section class="privacy-section">
+        <h2>{s.heading}</h2>
+        {s.body.map((p) => <p>{p}</p>)}
+      </section>
+    ))}
+  </article>
+</BaseLayout>
