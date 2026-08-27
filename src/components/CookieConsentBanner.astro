@@ -1,0 +1,114 @@
+---
+// 간단한 자체 쿠키 동의 배너 (CMP).
+// BaseLayout의 <head> 스크립트가 Consent Mode 기본값을 "거부"로 먼저 세팅해두기 때문에,
+// 방문자가 여기서 "동의"를 누르기 전까지는 GA4가 분석용 쿠키를 저장하지 않는다.
+// 한 번 선택하면 localStorage에 저장되어 다음 방문부터는 배너가 다시 뜨지 않는다.
+import type { Locale } from '../i18n/utils';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+
+type Dict = {
+  message: string;
+  accept: string;
+  reject: string;
+};
+
+const DICT: Record<Locale, Dict> = {
+  ko: {
+    message: '이 사이트는 방문 통계 분석을 위해 쿠키를 사용합니다.',
+    accept: '동의',
+    reject: '거부',
+  },
+  en: {
+    message: 'This site uses cookies for visitor analytics.',
+    accept: 'Accept',
+    reject: 'Reject',
+  },
+  ja: {
+    message: 'このサイトはアクセス解析のためにCookieを使用します。',
+    accept: '同意する',
+    reject: '拒否する',
+  },
+  zh: {
+    message: '本网站使用 Cookie 进行访问统计分析。',
+    accept: '同意',
+    reject: '拒绝',
+  },
+  in: {
+    message: 'यह साइट विज़िटर एनालिटिक्स के लिए कुकीज़ का उपयोग करती है।',
+    accept: 'स्वीकार करें',
+    reject: 'अस्वीकार करें',
+  },
+  de: {
+    message: 'Diese Website verwendet Cookies zur Besucheranalyse.',
+    accept: 'Akzeptieren',
+    reject: 'Ablehnen',
+  },
+  uk: {
+    message: 'This site uses cookies for visitor analytics.',
+    accept: 'Accept',
+    reject: 'Reject',
+  },
+  il: {
+    message: 'אתר זה משתמש בעוגיות (cookies) לניתוח נתוני מבקרים.',
+    accept: 'אני מסכים',
+    reject: 'אני מסרב',
+  },
+  tw: {
+    message: '本網站使用 Cookie 進行訪客統計分析。',
+    accept: '同意',
+    reject: '拒絕',
+  },
+};
+
+const t = DICT[lang] ?? DICT.en;
+---
+
+<div class="cookie-consent" id="cookie-consent" hidden dir={lang === 'il' ? 'rtl' : 'ltr'}>
+  <p class="cookie-consent-text">{t.message}</p>
+  <div class="cookie-consent-actions">
+    <button type="button" class="cookie-consent-btn reject" id="cookie-consent-reject">{t.reject}</button>
+    <button type="button" class="cookie-consent-btn accept" id="cookie-consent-accept">{t.accept}</button>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'cookie_consent';
+  const banner = document.getElementById('cookie-consent');
+  const acceptBtn = document.getElementById('cookie-consent-accept');
+  const rejectBtn = document.getElementById('cookie-consent-reject');
+
+  function pushConsent(granted) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push(['consent', 'update', { analytics_storage: granted ? 'granted' : 'denied' }]);
+  }
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) {
+      banner?.removeAttribute('hidden');
+    }
+  } catch {
+    // localStorage를 못 쓰는 환경(프라이빗 모드 등)이면 매번 배너를 띄우는 대신
+    // 안전하게 그냥 숨겨둔다 (쿠키도 계속 거부 상태로 유지됨).
+  }
+
+  acceptBtn?.addEventListener('click', () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, 'granted');
+    } catch {}
+    pushConsent(true);
+    banner?.setAttribute('hidden', '');
+  });
+
+  rejectBtn?.addEventListener('click', () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, 'denied');
+    } catch {}
+    pushConsent(false);
+    banner?.setAttribute('hidden', '');
+  });
+</script>

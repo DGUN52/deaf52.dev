@@ -4,6 +4,7 @@ import HeaderLangSwitcher from '../components/HeaderLangSwitcher.astro';
 import SearchBox from '../components/SearchBox.astro';
 import PopularSidebar from '../components/PopularSidebar.astro';
 import { LOCALES, type Locale } from '../i18n/utils';
+import CookieConsentBanner from '../components/CookieConsentBanner.astro';
 
 interface Props {
   title: string;
@@ -36,6 +37,25 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
 <!doctype html>
 <html lang={currentLang}>
 <head>
+  <!-- Consent Mode: GTM/GA4 태그가 로드되기 전에 기본값을 "거부"로 먼저 세팅.
+       이전에 방문자가 동의를 선택한 적이 있으면(localStorage) 그 값으로 즉시 갱신.
+       -> 배너에서 명시적으로 "동의"를 누르기 전까지는 분석용 쿠키가 저장되지 않는다. -->
+  <script is:inline>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+    });
+    try {
+      if (localStorage.getItem('cookie_consent') === 'granted') {
+        gtag('consent', 'update', { analytics_storage: 'granted' });
+      }
+    } catch (e) {}
+  </script>
   <!-- Google Tag Manager -->
     <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -70,6 +90,7 @@ const currentLang: Locale = (LOCALES as readonly string[]).includes(currentPath.
     <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
   </noscript>
   <!-- End Google Tag Manager (noscript) -->
+  <CookieConsentBanner lang={currentLang} />
   <header class="site-header">
     <a href={`/${currentLang}/`} class="site-title-group">
       <span class="site-title">deaf52</span>
