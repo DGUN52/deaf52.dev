@@ -1,0 +1,288 @@
+---
+// 번역 신고 조회용 관리자 페이지.
+// 이 경로 자체는 Cloudflare Access(대시보드 설정)로 이메일 인증 보호되는 것을 전제로 한다.
+// 로그인 UI/세션 관리는 이 페이지에 없다 — 접근 자체가 Access 뒤에서만 허용됨.
+// 다국어 사이트지만 이 페이지는 관리자 본인만 쓰는 페이지이므로 한국어 고정, [lang] 라우팅 밖에 둔다.
+// 이 프로젝트는 기본적으로 정적(static) 빌드이지만, [lang] 밖에 있는 페이지가 애매하게
+// 서버 출력으로 잡히는 경우가 있어 명시적으로 프리렌더(정적 HTML)를 강제한다.
+export const prerender = true;
+import '../../../styles/global.css';
+---
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>번역 신고 관리 · deaf52</title>
+</head>
+<body>
+  <main class="admin-shell">
+    <h1>번역 신고 관리</h1>
+    <p class="admin-sub">
+      <span id="admin-count">불러오는 중...</span>
+      &middot;
+      <label class="admin-filter">
+        <input type="checkbox" id="hide-resolved" checked />
+        처리완료 숨기기
+      </label>
+      &middot;
+      <button type="button" id="admin-refresh">새로고침</button>
+    </p>
+
+    <div id="admin-list" class="admin-list">
+      <p class="admin-empty">불러오는 중...</p>
+    </div>
+  </main>
+</body>
+</html>
+
+<style>
+  .admin-shell {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+    font-family: var(--font-mono);
+  }
+
+  .admin-shell h1 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .admin-sub {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+
+  #admin-refresh {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  #admin-refresh:hover {
+    border-color: var(--tech);
+    color: var(--tech);
+  }
+
+  .admin-empty {
+    color: var(--ink-soft);
+    padding: 2rem 0;
+    text-align: center;
+  }
+
+  .admin-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+  }
+
+  .admin-card.resolved {
+    opacity: 0.55;
+  }
+
+  .admin-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .admin-card-meta {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .admin-card-meta .slug {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .admin-issue-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: var(--tech-soft);
+    color: var(--tech);
+    white-space: nowrap;
+  }
+
+  .admin-comment {
+    font-size: 0.85rem;
+    color: var(--ink);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-top: 0.5rem;
+  }
+
+  .admin-toggle-btn {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .admin-toggle-btn:hover {
+    border-color: var(--human);
+    color: var(--human);
+  }
+</style>
+
+<script>
+  type Report = {
+    key: string;
+    slug: string;
+    lang: string;
+    issueType: string;
+    section: string | null;
+    comment: string | null;
+    createdAt: string;
+    status: 'open' | 'resolved';
+  };
+
+  const ISSUE_LABELS: Record<string, string> = {
+    'hard-to-understand': '이해하기 어려움',
+    'not-translated': '번역 안 됨',
+    'wrong-meaning': '의미가 다름',
+    typo: '오탈자',
+    other: '기타',
+  };
+
+  const listEl = document.getElementById('admin-list')!;
+  const countEl = document.getElementById('admin-count')!;
+  const refreshBtn = document.getElementById('admin-refresh')!;
+  const hideResolvedCheckbox = document.getElementById('hide-resolved') as HTMLInputElement;
+
+  let allReports: Report[] = [];
+
+  function formatDate(iso: string) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString('ko-KR', { hour12: false });
+    } catch {
+      return iso;
+    }
+  }
+
+  function render() {
+    const hideResolved = hideResolvedCheckbox.checked;
+    const visible = hideResolved ? allReports.filter((r) => r.status !== 'resolved') : allReports;
+
+    const openCount = allReports.filter((r) => r.status !== 'resolved').length;
+    countEl.textContent = `전체 ${allReports.length}건 · 미확인 ${openCount}건`;
+
+    if (visible.length === 0) {
+      listEl.innerHTML = '<p class="admin-empty">표시할 신고가 없습니다.</p>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    visible.forEach((r) => {
+      const card = document.createElement('div');
+      card.className = 'admin-card' + (r.status === 'resolved' ? ' resolved' : '');
+
+      const top = document.createElement('div');
+      top.className = 'admin-card-top';
+
+      const meta = document.createElement('div');
+      meta.className = 'admin-card-meta';
+      meta.innerHTML = `
+        <span class="slug">${escapeHtml(r.slug)}</span> (${escapeHtml(r.lang)})<br>
+        ${formatDate(r.createdAt)}${r.section ? ' · 섹션: ' + escapeHtml(r.section) : ''}
+      `;
+
+      const badge = document.createElement('span');
+      badge.className = 'admin-issue-badge';
+      badge.textContent = ISSUE_LABELS[r.issueType] ?? r.issueType;
+
+      top.appendChild(meta);
+      top.appendChild(badge);
+      card.appendChild(top);
+
+      if (r.comment) {
+        const comment = document.createElement('p');
+        comment.className = 'admin-comment';
+        comment.textContent = r.comment;
+        card.appendChild(comment);
+      }
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.className = 'admin-toggle-btn';
+      toggleBtn.style.marginTop = '0.75rem';
+      toggleBtn.textContent = r.status === 'resolved' ? '미확인으로 되돌리기' : '처리완료로 표시';
+      toggleBtn.addEventListener('click', () => toggleStatus(r));
+      card.appendChild(toggleBtn);
+
+      listEl.appendChild(card);
+    });
+  }
+
+  function escapeHtml(s: string) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  async function toggleStatus(r: Report) {
+    const nextStatus = r.status === 'resolved' ? 'open' : 'resolved';
+    try {
+      const res = await fetch(`/api/admin/reports?key=${encodeURIComponent(r.key)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error('요청 실패');
+      r.status = nextStatus;
+      render();
+    } catch {
+      alert('상태 변경에 실패했습니다. 다시 시도해 주세요.');
+    }
+  }
+
+  async function loadReports() {
+    listEl.innerHTML = '<p class="admin-empty">불러오는 중...</p>';
+    try {
+      const res = await fetch('/api/admin/reports');
+      if (!res.ok) throw new Error('요청 실패');
+      const data = await res.json();
+      allReports = (data.items ?? []) as Report[];
+      render();
+    } catch {
+      listEl.innerHTML = '<p class="admin-empty">불러오기에 실패했습니다. 새로고침을 눌러 다시 시도해 주세요.</p>';
+    }
+  }
+
+  refreshBtn.addEventListener('click', loadReports);
+  hideResolvedCheckbox.addEventListener('change', render);
+
+  loadReports();
+</script>

@@ -6,6 +6,10 @@
 // POST /api/like/post?slug=xxx     -> 해당 글 좋아요 토글 (클라이언트가 보낸 liked 여부에 따라 +1/-1)
 // POST /api/report/translation     -> 번역 신고 접수 (body: { slug, lang, issueType, section?, comment? })
 // GET  /api/ranking?metric=views|likes&limit=5  -> 조회수/좋아요 상위 글 목록 (slug, count)
+// GET   /api/admin/reports              -> 번역 신고 전체 목록 (최신순)
+// PATCH /api/admin/reports?key=xxx      -> 신고 처리 상태 토글 (body: { status: 'open' | 'resolved' })
+//   ※ 관리자 API는 인증 로직을 자체적으로 두지 않는다. Cloudflare Access로 /admin/* 경로 자체를
+//     이메일 인증 보호하는 것을 전제로 하며, 이 API는 그 뒤에서만 호출된다.
 //
 // wrangler.jsonc의 kv_namespaces에 COUNTERS 바인딩이 설정되어 있어야 동작한다.
 // 좋아요는 "누가 눌렀는지"를 서버에 저장하지 않는다 (로그인 시스템이 없으므로).
@@ -40,7 +44,8 @@ export default {
       !url.pathname.startsWith('/api/counter/') &&
       !url.pathname.startsWith('/api/like/') &&
       !url.pathname.startsWith('/api/report/') &&
-      !url.pathname.startsWith('/api/ranking')
+      !url.pathname.startsWith('/api/ranking') &&
+      !url.pathname.startsWith('/api/admin/')
     ) {
       const response = await env.ASSETS.fetch(request);
       const contentType = response.headers.get('content-type') || '';
@@ -122,11 +127,71 @@ export default {
         section: section ? String(section).slice(0, 200) : null,
         comment: comment ? String(comment).slice(0, 1000) : null,
         createdAt: new Date(timestamp).toISOString(),
+        status: 'open', // 관리자 페이지에서 확인 처리하면 'resolved'로 바뀜
       };
 
       await env.COUNTERS.put(key, JSON.stringify(record));
 
       return json({ ok: true });
+    }
+
+    // ---------- 관리자: 번역 신고 조회/처리 (신규) ----------
+    // 인증은 Cloudflare Access가 /admin/* 경로에서 처리한다는 전제.
+    if (url.pathname === '/api/admin/reports') {
+      if (request.method === 'GET') {
+        const list = await env.COUNTERS.list({ prefix: 'report:' });
+        const items = await Promise.all(
+          list.keys.map(async (k) => {
+            const raw = await env.COUNTERS.get(k.name);
+            if (!raw) return null;
+            let record;
+            try {
+              record = JSON.parse(raw);
+            } catch {
+              return null;
+            }
+            return { key: k.name, status: 'open', ...record };
+          })
+        );
+        const cleaned = items
+          .filter(Boolean)
+          .sort((a, b) => (a.key < b.key ? 1 : -1)); // key에 타임스탬프가 포함되어 있어 최신순 정렬됨
+
+        return json({ items: cleaned });
+      }
+
+      if (request.method === 'PATCH') {
+        const key = url.searchParams.get('key');
+        if (!key || !key.startsWith('report:')) {
+          return json({ error: 'valid key query param required' }, 400);
+        }
+        let body;
+        try {
+          body = await request.json();
+        } catch {
+          return json({ error: 'invalid JSON body' }, 400);
+        }
+        if (body.status !== 'open' && body.status !== 'resolved') {
+          return json({ error: 'status must be "open" or "resolved"' }, 400);
+        }
+
+        const raw = await env.COUNTERS.get(key);
+        if (!raw) return json({ error: 'report not found' }, 404);
+
+        let record;
+        try {
+          record = JSON.parse(raw);
+        } catch {
+          return json({ error: 'stored report is corrupted' }, 500);
+        }
+
+        record.status = body.status;
+        await env.COUNTERS.put(key, JSON.stringify(record));
+
+        return json({ ok: true, item: { key, ...record } });
+      }
+
+      return new Response('Method Not Allowed', { status: 405 });
     }
 
     // ---------- 인기글 랭킹 (신규) ----------
