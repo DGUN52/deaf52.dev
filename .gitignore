@@ -9,3 +9,4 @@ npm-debug.log*
 src/content/it/**
 src/content/humanities/**
 src/content/public/**
+public/images/
