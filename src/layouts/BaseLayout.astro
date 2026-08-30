@@ -25,6 +25,11 @@ interface Props {
   // 넘기지 않으면(홈/카테고리/개인정보처리방침 등 항상 9개 언어가 다 있다고 볼 수 있는 페이지)
   // 현재 경로의 언어 세그먼트만 바꿔서 9개 전부를 자동 생성한다.
   hreflangPaths?: Partial<Record<Locale, string>>;
+  // OpenGraph/Twitter Card용 이미지 경로. "/images/xxx.png"처럼 절대경로(공용 public/ 기준)로 넘기면
+  // siteOrigin과 합쳐서 og:image에 쓰인다. 넘기지 않으면 사이트 기본 이미지(/og-default.png)로 폴백.
+  ogImage?: string;
+  // og:type. 글 상세 페이지는 'article', 그 외(홈/카테고리 등)는 기본값 'website'.
+  ogType?: 'website' | 'article';
 }
 const {
   title,
@@ -33,6 +38,8 @@ const {
   slugOverrides,
   showSidebar = false,
   hreflangPaths,
+  ogImage,
+  ogType = 'website',
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
@@ -48,6 +55,12 @@ const effectiveHreflangPaths: Partial<Record<Locale, string>> =
 
 const siteOrigin = (Astro.site?.origin ?? 'https://deaf52.dev').replace(/\/$/, '');
 const hreflangEntries = Object.entries(effectiveHreflangPaths) as Array<[Locale, string]>;
+
+// OpenGraph/Twitter Card: 카카오톡·슬랙·트위터 등에 링크를 공유했을 때 미리보기 카드에 쓰인다.
+// ogImage가 없으면(글에 heroImage를 안 넣은 경우 등) 사이트 기본 이미지로 폴백해서
+// 항상 og:image가 비어있지 않도록 한다.
+const ogImageAbs = `${siteOrigin}${ogImage ?? '/og-default.png'}`;
+const canonicalUrl = `${siteOrigin}${currentPath}`;
 
 // 로컬 개발 서버(astro dev)에서 글을 미리보기만 해도 GTM/GA4로 실제 이벤트가 전송되던 문제.
 // import.meta.env.DEV는 `astro dev`에서 true, `astro build`(배포용 빌드)에서는 false로
@@ -110,6 +123,20 @@ const isDev = import.meta.env.DEV;
   <title>{title} · deaf52</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  <!-- OpenGraph / Twitter Card: 카카오톡, 슬랙, 트위터(X), 페이스북 등에 링크 공유 시 미리보기 카드 생성.
+       og:image가 없는 페이지가 없도록 ogImageAbs에서 이미 기본 이미지로 폴백 처리됨. -->
+  <meta property="og:type" content={ogType} />
+  <meta property="og:site_name" content="deaf52" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:image" content={ogImageAbs} />
+  <meta property="og:locale" content={LOCALE_HREFLANG[currentLang].replace('-', '_')} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImageAbs} />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link
     rel="stylesheet"
