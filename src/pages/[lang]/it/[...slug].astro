@@ -23,6 +23,11 @@ const availableLangs = Object.keys(translations) as Array<typeof entry.data.lang
 const slugOverrides = Object.fromEntries(
   Object.entries(translations).map(([lang, sibling]) => [lang, sibling!.slug.replace(LOCALE_PREFIX_RE, '')])
 );
+// hreflang용: 실제로 번역이 존재하는 언어의 절대경로만 만든다 (없는 언어는 아예 제외 -
+// 존재하지 않는 페이지를 hreflang으로 걸면 검색엔진에 잘못된 신호가 된다).
+const hreflangPaths = Object.fromEntries(
+  Object.entries(slugOverrides).map(([lang, slug]) => [lang, `/${lang}/it/${slug}/`])
+);
 ---
 
 <BaseLayout
@@ -30,6 +35,7 @@ const slugOverrides = Object.fromEntries(
   description={entry.data.description}
   availableLangs={availableLangs}
   slugOverrides={slugOverrides}
+  hreflangPaths={hreflangPaths}
   showSidebar
 >
   <div class="post-meta-bar">
