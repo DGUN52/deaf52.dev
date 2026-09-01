@@ -48,51 +48,63 @@ const effectiveHreflangPaths: Partial<Record<Locale, string>> =
 
 const siteOrigin = (Astro.site?.origin ?? 'https://deaf52.dev').replace(/\/$/, '');
 const hreflangEntries = Object.entries(effectiveHreflangPaths) as Array<[Locale, string]>;
+
+// 로컬 개발 서버(astro dev)에서 글을 미리보기만 해도 GTM/GA4로 실제 이벤트가 전송되던 문제.
+// import.meta.env.DEV는 `astro dev`에서 true, `astro build`(배포용 빌드)에서는 false로
+// 자동 세팅되는 Vite/Astro 내장 플래그라서, 별도 환경변수 설정 없이 이것만으로
+// "로컬 미리보기 vs 실제 배포"를 정확히 구분할 수 있다.
+// GTM 자체를 아예 로드하지 않으므로 dataLayer.push는 계속 안전하게 no-op으로 남는다
+// (CookieConsentBanner 등 다른 곳의 push 호출들이 에러 없이 무시됨).
+const isDev = import.meta.env.DEV;
 ---
 <!doctype html>
 <html lang={LOCALE_HREFLANG[currentLang]}>
 <head>
-  <!-- Consent Mode: GTM/GA4 태그가 로드되기 전에 지역별 기본값을 먼저 세팅.
-       window.__CF_COUNTRY__는 worker/index.js가 Cloudflare의 request.cf.country를
-       읽어서 <head> 맨 앞에 심어주는 값 (이 스크립트보다 먼저 실행됨).
-       GDPR/EEA 권역(+UK, 스위스)만 기본값을 "거부"로, 그 외 지역은 "허용"으로 시작한다
-       (구글 공식 가이드의 "지역별 기본 동의 상태" 권장 방식).
-       이전에 방문자가 명시적으로 선택한 적이 있으면(localStorage) 지역과 무관하게 그 값을 따른다. -->
-  <script is:inline>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
+  {!isDev && (
+    <>
+      <!-- Consent Mode: GTM/GA4 태그가 로드되기 전에 지역별 기본값을 먼저 세팅.
+           window.__CF_COUNTRY__는 worker/index.js가 Cloudflare의 request.cf.country를
+           읽어서 <head> 맨 앞에 심어주는 값 (이 스크립트보다 먼저 실행됨).
+           GDPR/EEA 권역(+UK, 스위스)만 기본값을 "거부"로, 그 외 지역은 "허용"으로 시작한다
+           (구글 공식 가이드의 "지역별 기본 동의 상태" 권장 방식).
+           이전에 방문자가 명시적으로 선택한 적이 있으면(localStorage) 지역과 무관하게 그 값을 따른다. -->
+      <script is:inline>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
 
-    var GDPR_REGION = [
-      'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
-      'LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE', // EU
-      'IS','LI','NO', // EEA (비 EU)
-      'GB', // 영국
-      'CH', // 스위스
-    ];
-    window.__IS_GDPR_REGION__ = GDPR_REGION.indexOf(window.__CF_COUNTRY__ || '') !== -1;
-    var defaultState = window.__IS_GDPR_REGION__ ? 'denied' : 'granted';
+        var GDPR_REGION = [
+          'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
+          'LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE', // EU
+          'IS','LI','NO', // EEA (비 EU)
+          'GB', // 영국
+          'CH', // 스위스
+        ];
+        window.__IS_GDPR_REGION__ = GDPR_REGION.indexOf(window.__CF_COUNTRY__ || '') !== -1;
+        var defaultState = window.__IS_GDPR_REGION__ ? 'denied' : 'granted';
 
-    gtag('consent', 'default', {
-      ad_storage: defaultState,
-      ad_user_data: defaultState,
-      ad_personalization: defaultState,
-      analytics_storage: defaultState,
-      wait_for_update: 500,
-    });
-    try {
-      var saved = localStorage.getItem('cookie_consent');
-      if (saved === 'granted' || saved === 'denied') {
-        gtag('consent', 'update', { analytics_storage: saved });
-      }
-    } catch (e) {}
-  </script>
-  <!-- Google Tag Manager -->
-    <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-TFW86BDB');</script>
-  <!-- End Google Tag Manager -->
+        gtag('consent', 'default', {
+          ad_storage: defaultState,
+          ad_user_data: defaultState,
+          ad_personalization: defaultState,
+          analytics_storage: defaultState,
+          wait_for_update: 500,
+        });
+        try {
+          var saved = localStorage.getItem('cookie_consent');
+          if (saved === 'granted' || saved === 'denied') {
+            gtag('consent', 'update', { analytics_storage: saved });
+          }
+        } catch (e) {}
+      </script>
+      <!-- Google Tag Manager -->
+        <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TFW86BDB');</script>
+      <!-- End Google Tag Manager -->
+    </>
+  )}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title} · deaf52</title>
@@ -126,11 +138,15 @@ const hreflangEntries = Object.entries(effectiveHreflangPaths) as Array<[Locale,
   )}
 </head>
 <body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript>
-    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
-  </noscript>
-  <!-- End Google Tag Manager (noscript) -->
+  {!isDev && (
+    <>
+      <!-- Google Tag Manager (noscript) -->
+      <noscript>
+        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+      </noscript>
+      <!-- End Google Tag Manager (noscript) -->
+    </>
+  )}
   <CookieConsentBanner lang={currentLang} />
   <header class="site-header">
     <a href={`/${currentLang}/`} class="site-title-group">
