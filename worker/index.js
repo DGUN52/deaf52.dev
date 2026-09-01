@@ -45,7 +45,8 @@ export default {
       !url.pathname.startsWith('/api/like/') &&
       !url.pathname.startsWith('/api/report/') &&
       !url.pathname.startsWith('/api/ranking') &&
-      !url.pathname.startsWith('/api/admin/')
+      !url.pathname.startsWith('/api/admin/') &&
+      !url.pathname.startsWith('/api/editor/')
     ) {
       const response = await env.ASSETS.fetch(request);
       const contentType = response.headers.get('content-type') || '';
@@ -192,6 +193,70 @@ export default {
       }
 
       return new Response('Method Not Allowed', { status: 405 });
+    }
+
+    // ---------- 관리자: md 에디터용 글 목록/조회 (신규, 읽기 전용) ----------
+    // GitHub API로 content 저장소(private repo)의 it/ko, humanities/ko 아래 .md 파일을 읽어온다.
+    // 이 API는 목록/조회만 제공하고 저장(쓰기)은 하지 않는다 - 저장은 관리자 페이지에서
+    // .md 파일을 직접 다운로드해서 로컬 content 폴더에 옮기고 git commit/push하는 방식.
+    // env.GITHUB_READ_TOKEN: content 저장소에 대한 Contents:Read-only 권한의
+    // GitHub Fine-grained token (Worker Secret으로 별도 등록 필요, 빌드용 CONTENT_REPO_TOKEN과는 별개).
+    if (url.pathname === '/api/editor/posts' && request.method === 'GET') {
+      if (!env.GITHUB_READ_TOKEN) {
+        return json({ error: 'GITHUB_READ_TOKEN이 설정되지 않았습니다.' }, 500);
+      }
+
+      const category = url.searchParams.get('category');
+      const slug = url.searchParams.get('slug');
+
+      if (!category || !['it', 'humanities'].includes(category)) {
+        return json({ error: 'category는 it 또는 humanities여야 합니다.' }, 400);
+      }
+
+      const REPO = 'DGUN52/deaf52.dev-content';
+
+      // slug가 있으면 해당 글(ko 원본) 내용을 읽어서 반환
+      if (slug) {
+        const filePath = `${category}/ko/${slug}.md`;
+        const res = await fetch(
+          `https://api.github.com/repos/${REPO}/contents/${filePath}`,
+          {
+            headers: {
+              Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
+              'User-Agent': 'deaf52-admin-editor',
+              Accept: 'application/vnd.github.raw+json',
+            },
+          }
+        );
+        if (!res.ok) {
+          return json({ error: `GitHub API 오류 (${res.status})` }, res.status === 404 ? 404 : 502);
+        }
+        const content = await res.text();
+        return json({ slug, category, content });
+      }
+
+      // slug가 없으면 ko 폴더의 글 목록(파일명만)을 반환
+      const dirPath = `${category}/ko`;
+      const res = await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${dirPath}`,
+        {
+          headers: {
+            Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
+            'User-Agent': 'deaf52-admin-editor',
+            Accept: 'application/vnd.github+json',
+          },
+        }
+      );
+      if (!res.ok) {
+        return json({ error: `GitHub API 오류 (${res.status})` }, res.status === 404 ? 404 : 502);
+      }
+      const files = await res.json();
+      const items = (Array.isArray(files) ? files : [])
+        .filter((f) => f.type === 'file' && f.name.endsWith('.md'))
+        .map((f) => f.name.replace(/\.md$/, ''))
+        .sort();
+
+      return json({ category, items });
     }
 
     // ---------- 인기글 랭킹 (신규) ----------

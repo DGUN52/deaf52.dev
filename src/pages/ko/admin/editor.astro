@@ -1,0 +1,483 @@
+---
+// md 글 작성/수정용 관리자 에디터 페이지.
+// 이 경로 자체는 Cloudflare Access(대시보드 설정)로 이메일 인증 보호되는 것을 전제로 한다.
+// 로그인 UI/세션 관리는 이 페이지에 없다 — 접근 자체가 Access 뒤에서만 허용됨.
+// 다국어 사이트지만 이 페이지는 관리자 본인만 쓰는 페이지이므로 한국어 고정, [lang] 라우팅 밖에 둔다.
+//
+// 저장 방식: 이 에디터는 GitHub API로 기존 글을 "읽기"만 한다(/api/editor/posts, Worker의
+// GITHUB_READ_TOKEN 사용). content 저장소는 private repo라 Worker가 여기 직접 쓸 방법이
+// 마땅치 않고(별도 쓰기 토큰 + 커밋 API 왕복이 필요해 배보다 배꼽이 커짐), 대신 "저장" 버튼은
+// frontmatter+본문을 조합한 .md 파일을 브라우저가 즉시 다운로드하게 만든다.
+// 관리자가 다운로드된 파일을 로컬 content 폴더(it/{lang}/ 또는 humanities/{lang}/)에 옮기고
+// 직접 git add/commit/push 하는 것으로 게시가 완료된다 (기존 번역 스크립트 워크플로우와 동일한 결).
+export const prerender = true;
+import '../../../styles/global.css';
+---
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>글 에디터 · deaf52</title>
+</head>
+<body>
+  <main class="editor-shell">
+    <h1>글 에디터</h1>
+    <p class="editor-sub">
+      <a href="/ko/admin/reports">← 번역 신고 관리로</a>
+    </p>
+
+    <div class="editor-toolbar">
+      <label>
+        카테고리
+        <select id="ed-category">
+          <option value="it">IT기술</option>
+          <option value="humanities">인문학</option>
+        </select>
+      </label>
+
+      <label>
+        기존 글 불러오기
+        <select id="ed-existing">
+          <option value="">— 새 글 작성 —</option>
+        </select>
+      </label>
+
+      <button type="button" id="ed-load-list">목록 새로고침</button>
+    </div>
+
+    <p id="ed-status" class="editor-status"></p>
+
+    <form id="ed-form" class="editor-form">
+      <div class="editor-grid">
+        <label>
+          제목 (title)
+          <input type="text" id="fm-title" required />
+        </label>
+
+        <label>
+          설명 (description)
+          <input type="text" id="fm-description" required />
+        </label>
+
+        <label>
+          언어 (lang)
+          <select id="fm-lang">
+            <option value="ko">ko</option>
+            <option value="en">en</option>
+            <option value="ja">ja</option>
+            <option value="zh">zh</option>
+            <option value="in">in</option>
+            <option value="de">de</option>
+            <option value="uk">uk</option>
+            <option value="il">il</option>
+            <option value="tw">tw</option>
+          </select>
+        </label>
+
+        <label>
+          translationKey
+          <input type="text" id="fm-translationKey" required />
+        </label>
+
+        <label>
+          slug (파일명, 확장자 제외)
+          <input type="text" id="fm-slug" required />
+        </label>
+
+        <label>
+          발행일 (publishedAt)
+          <input type="date" id="fm-publishedAt" required />
+        </label>
+
+        <label class="editor-tech-field" id="fm-tech-wrap">
+          기술 태그 (tech, 쉼표로 구분)
+          <input type="text" id="fm-tech" placeholder="Docker, MongoDB" />
+        </label>
+
+        <label class="editor-subcategory-field" id="fm-subcategory-wrap" hidden>
+          소분류 (subcategory)
+          <select id="fm-subcategory">
+            <option value="review">review</option>
+            <option value="reflection">reflection</option>
+            <option value="fiction">fiction</option>
+            <option value="nonfiction">nonfiction</option>
+          </select>
+        </label>
+
+        <label>
+          heroImage (선택, 예: /images/xxx.jpg)
+          <input type="text" id="fm-heroImage" />
+        </label>
+
+        <label class="editor-checkbox-field">
+          <input type="checkbox" id="fm-draft" />
+          draft (초안으로 저장, 배포 시 숨김)
+        </label>
+      </div>
+
+      <label class="editor-body-field">
+        본문 (Markdown)
+        <textarea id="ed-body" rows="20" placeholder="# 제목&#10;&#10;본문을 마크다운으로 작성하세요..."></textarea>
+      </label>
+
+      <div class="editor-actions">
+        <button type="button" id="ed-download">.md 파일 다운로드</button>
+        <span class="editor-hint">
+          다운로드한 파일을 <code>content/{'{'}category{'}'}/{'{'}lang{'}'}/</code> 폴더에 넣고 git commit/push 하세요.
+        </span>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
+
+<style>
+  .editor-shell {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+    font-family: var(--font-mono);
+  }
+
+  .editor-shell h1 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .editor-sub {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .editor-sub a {
+    color: var(--tech);
+  }
+
+  .editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #fafafa;
+  }
+
+  .editor-toolbar label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .editor-toolbar select,
+  .editor-toolbar button {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+  }
+
+  .editor-toolbar button {
+    cursor: pointer;
+    height: fit-content;
+  }
+
+  .editor-toolbar button:hover {
+    border-color: var(--tech);
+    color: var(--tech);
+  }
+
+  .editor-status {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    min-height: 1.2em;
+    margin-bottom: 1rem;
+  }
+
+  .editor-status.error {
+    color: #b23b3b;
+  }
+
+  .editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .editor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .editor-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .editor-checkbox-field {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0.5rem !important;
+  }
+
+  .editor-grid input,
+  .editor-grid select {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .editor-body-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .editor-body-field textarea {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    padding: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    resize: vertical;
+  }
+
+  .editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  #ed-download {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--tech);
+    border-radius: 4px;
+    background: var(--tech);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  #ed-download:hover {
+    opacity: 0.85;
+  }
+
+  .editor-hint {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .editor-hint code {
+    background: var(--tech-soft);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+  }
+</style>
+
+<script>
+  type ExistingPost = { category: 'it' | 'humanities'; slug: string };
+
+  const categorySelect = document.getElementById('ed-category') as HTMLSelectElement;
+  const existingSelect = document.getElementById('ed-existing') as HTMLSelectElement;
+  const loadListBtn = document.getElementById('ed-load-list')!;
+  const statusEl = document.getElementById('ed-status')!;
+  const downloadBtn = document.getElementById('ed-download')!;
+  const bodyEl = document.getElementById('ed-body') as HTMLTextAreaElement;
+
+  const subcategoryWrap = document.getElementById('fm-subcategory-wrap')!;
+  const techWrap = document.getElementById('fm-tech-wrap')!;
+
+  const fields = {
+    title: document.getElementById('fm-title') as HTMLInputElement,
+    description: document.getElementById('fm-description') as HTMLInputElement,
+    lang: document.getElementById('fm-lang') as HTMLSelectElement,
+    translationKey: document.getElementById('fm-translationKey') as HTMLInputElement,
+    slug: document.getElementById('fm-slug') as HTMLInputElement,
+    publishedAt: document.getElementById('fm-publishedAt') as HTMLInputElement,
+    tech: document.getElementById('fm-tech') as HTMLInputElement,
+    subcategory: document.getElementById('fm-subcategory') as HTMLSelectElement,
+    heroImage: document.getElementById('fm-heroImage') as HTMLInputElement,
+    draft: document.getElementById('fm-draft') as HTMLInputElement,
+  };
+
+  function setStatus(msg: string, isError = false) {
+    statusEl.textContent = msg;
+    statusEl.classList.toggle('error', isError);
+  }
+
+  function updateCategoryFields() {
+    const isHumanities = categorySelect.value === 'humanities';
+    subcategoryWrap.hidden = !isHumanities;
+    techWrap.hidden = isHumanities;
+  }
+
+  function resetForm() {
+    fields.title.value = '';
+    fields.description.value = '';
+    fields.lang.value = 'ko';
+    fields.translationKey.value = '';
+    fields.slug.value = '';
+    fields.publishedAt.value = new Date().toISOString().slice(0, 10);
+    fields.tech.value = '';
+    fields.subcategory.value = 'review';
+    fields.heroImage.value = '';
+    fields.draft.checked = false;
+    bodyEl.value = '';
+  }
+
+  async function loadList() {
+    setStatus('글 목록 불러오는 중...');
+    try {
+      const category = categorySelect.value;
+      const res = await fetch(`/api/editor/posts?category=${encodeURIComponent(category)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? '요청 실패');
+
+      existingSelect.innerHTML = '<option value="">— 새 글 작성 —</option>';
+      (data.items ?? []).forEach((slug: string) => {
+        const opt = document.createElement('option');
+        opt.value = slug;
+        opt.textContent = slug;
+        existingSelect.appendChild(opt);
+      });
+      setStatus(`${data.items?.length ?? 0}개 글 (ko 기준)`);
+    } catch (err) {
+      setStatus('목록 불러오기 실패: ' + (err instanceof Error ? err.message : String(err)), true);
+    }
+  }
+
+  // 아주 단순한 frontmatter 파서. gray-matter 없이 이 페이지 안에서만 쓰는 최소 구현이라
+  // 복잡한 YAML(중첩 객체 등)은 지원하지 않는다 - 이 프로젝트의 frontmatter 스키마 정도만 커버.
+  function parseFrontmatter(raw: string): { fm: Record<string, string>; body: string } {
+    const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+    if (!match) return { fm: {}, body: raw };
+    const [, fmBlock, body] = match;
+    const fm: Record<string, string> = {};
+    fmBlock.split('\n').forEach((line) => {
+      if (!line.trim() || line.trim().startsWith('#')) return;
+      const idx = line.indexOf(':');
+      if (idx === -1) return;
+      const key = line.slice(0, idx).trim();
+      let value = line.slice(idx + 1).trim();
+      value = value.replace(/^["']|["']$/g, '');
+      fm[key] = value;
+    });
+    return { fm, body: body.replace(/^\n/, '') };
+  }
+
+  async function loadExisting() {
+    const slug = existingSelect.value;
+    if (!slug) {
+      resetForm();
+      return;
+    }
+    setStatus('글 불러오는 중...');
+    try {
+      const category = categorySelect.value;
+      const res = await fetch(
+        `/api/editor/posts?category=${encodeURIComponent(category)}&slug=${encodeURIComponent(slug)}`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? '요청 실패');
+
+      const { fm, body } = parseFrontmatter(data.content as string);
+      fields.title.value = fm.title ?? '';
+      fields.description.value = fm.description ?? '';
+      fields.lang.value = fm.lang ?? 'ko';
+      fields.translationKey.value = fm.translationKey ?? '';
+      fields.slug.value = slug;
+      fields.publishedAt.value = (fm.publishedAt ?? '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+      fields.tech.value = (fm.tech ?? '').replace(/^\[|\]$/g, '').replace(/"/g, '');
+      fields.subcategory.value = fm.subcategory ?? 'review';
+      fields.heroImage.value = fm.heroImage ?? '';
+      fields.draft.checked = fm.draft === 'true';
+      bodyEl.value = body;
+
+      setStatus(`불러옴: ${category}/ko/${slug}.md`);
+    } catch (err) {
+      setStatus('글 불러오기 실패: ' + (err instanceof Error ? err.message : String(err)), true);
+    }
+  }
+
+  function buildMarkdown(): string {
+    const category = categorySelect.value;
+    const lines = ['---'];
+    lines.push(`title: "${fields.title.value.replace(/"/g, '\\"')}"`);
+    lines.push(`description: "${fields.description.value.replace(/"/g, '\\"')}"`);
+    lines.push(`lang: ${fields.lang.value}`);
+    lines.push(`translationKey: "${fields.translationKey.value}"`);
+    lines.push(`publishedAt: ${fields.publishedAt.value}`);
+    lines.push(`draft: ${fields.draft.checked}`);
+    lines.push(`category: ${category}`);
+    if (category === 'it') {
+      const tech = fields.tech.value
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      lines.push(`tech: [${tech.join(', ')}]`);
+    } else {
+      lines.push(`subcategory: ${fields.subcategory.value}`);
+    }
+    if (fields.heroImage.value.trim()) {
+      lines.push(`heroImage: "${fields.heroImage.value.trim()}"`);
+    }
+    lines.push('---');
+    lines.push('');
+    lines.push(bodyEl.value);
+    return lines.join('\n');
+  }
+
+  function download() {
+    if (!fields.title.value || !fields.slug.value || !fields.translationKey.value) {
+      setStatus('제목, slug, translationKey는 필수입니다.', true);
+      return;
+    }
+    const markdown = buildMarkdown();
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fields.slug.value}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    const category = categorySelect.value;
+    setStatus(
+      `다운로드 완료. content/${category}/${fields.lang.value}/${fields.slug.value}.md 로 옮기고 git commit/push 하세요.`
+    );
+  }
+
+  categorySelect.addEventListener('change', () => {
+    updateCategoryFields();
+    loadList();
+  });
+  existingSelect.addEventListener('change', loadExisting);
+  loadListBtn.addEventListener('click', loadList);
+  downloadBtn.addEventListener('click', download);
+
+  updateCategoryFields();
+  resetForm();
+  loadList();
+</script>
