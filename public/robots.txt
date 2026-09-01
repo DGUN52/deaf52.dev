@@ -3,4 +3,33 @@ Allow: /
 Disallow: /api/
 Disallow: /pagefind/
 
+# 검색 노출/인용은 유지하되, 순수 AI 모델 학습(스크래핑) 목적 크롤러만 차단.
+# 각 봇은 검색용/실시간조회용과 분리된 학습 전용 user-agent임이 공식문서로 확인된 것만 포함:
+# - GPTBot(OpenAI), ClaudeBot(Anthropic), Google-Extended(Google Gemini),
+#   CCBot(Common Crawl - 다수 AI 기업이 학습에 재사용), Applebot-Extended(Apple),
+#   Amazonbot(Amazon)
+# Bytespider/Diffbot/Meta-ExternalAgent는 검색·인덱싱 기능과 분리되지 않거나
+# robots.txt 준수가 불확실해 제외.
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+# 신규 표준 신호(지원 크롤러 대상, 위 User-agent 규칙과 병행 적용):
+# 검색 노출/AI 실시간 인용은 허용하되 모델 학습에는 사용하지 말 것을 명시.
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+
 Sitemap: https://deaf52.dev/sitemap-index.xml
