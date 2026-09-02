@@ -1364,6 +1364,13 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   padding: 0 clamp(1rem, 3vw, 2rem);
 }
 
+/* 우측 목차 사이드바가 같이 있는 글(TOC가 있는 글)은 3단 구성이라 컨테이너를 더 넓혀서
+   본문(page-shell-with-sidebar, max-width 760px)이 눌리지 않게 한다.
+   TOC가 없는 글/페이지는 기존 1100px 2단 레이아웃 그대로 유지. */
+.page-with-sidebar.has-toc {
+  max-width: 1400px;
+}
+
 .page-shell-with-sidebar {
   flex: 1;
   min-width: 0;
@@ -1412,6 +1419,95 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   min-height: 0; /* 광고 미배치 시 여백 안 남게. 나중에 광고 넣을 때 min-height 조정 */
 }
 
+/* ---------- TOC (목차) 사이드바 - 데스크탑 전용, 본문 우측 sticky ---------- */
+.toc-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 1.5rem;
+  order: 1; /* 본문(order 기본값 0) 오른쪽에 오도록 */
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+.toc-sidebar-inner {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.1rem;
+  background: var(--paper-deep);
+}
+
+.toc-sidebar-title {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+}
+
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.toc-list a {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  display: block;
+  border-left: 2px solid transparent;
+  padding-left: 0.6rem;
+}
+
+.toc-list a:hover {
+  color: var(--tech);
+}
+
+.toc-list a.active {
+  color: var(--tech);
+  font-weight: 600;
+  border-left-color: var(--tech);
+}
+
+/* ---------- TOC 접이식 박스 - 모바일 전용, 본문 상단에 표시 ---------- */
+.toc-inline {
+  display: none; /* 데스크탑에서는 숨김 (우측 sticky 사이드바가 대신함) */
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--paper-deep);
+}
+
+.toc-inline .toc-list {
+  margin-top: 0.8rem;
+}
+
+.toc-inline-summary {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none; /* 기본 삼각형 마커 제거 (커스텀 화살표로 대체) */
+}
+
+.toc-inline-summary::-webkit-details-marker {
+  display: none;
+}
+
+.toc-inline-summary::after {
+  content: '▾';
+  float: right;
+  transition: transform 0.15s ease;
+}
+
+.toc-inline[open] .toc-inline-summary::after {
+  transform: rotate(180deg);
+}
+
 /* ---------- Mobile: sidebar moves below content, no longer sticky ---------- */
 @media (max-width: 900px) {
   .page-with-sidebar {
@@ -1427,6 +1523,14 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   .page-shell-with-sidebar {
     order: 0;
     max-width: none;
+  }
+
+  .toc-sidebar {
+    display: none; /* 모바일에서는 접이식 인라인 버전(.toc-inline)이 대신함 */
+  }
+
+  .toc-inline {
+    display: block;
   }
 }
 

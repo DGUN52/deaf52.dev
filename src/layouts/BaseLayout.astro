@@ -20,6 +20,10 @@ interface Props {
   // true면 좌측에 인기글 사이드바를 배치한다 (데스크탑: sticky 사이드바 / 모바일: 본문 하단).
   // 글 상세 페이지에서만 켜고, 홈/카테고리 목록 페이지는 기본값(false)으로 둔다.
   showSidebar?: boolean;
+  // true면 우측 목차(TOC) sticky 사이드바가 있다는 뜻 - 컨테이너 최대폭을 3단 레이아웃에
+  // 맞게 넓힌다. 실제 목차 마크업은 이 레이아웃이 아니라 "toc" named slot으로 전달됨
+  // (글 페이지가 <TocSidebar slot="toc" .../>를 <BaseLayout> 자식으로 넣어줌).
+  hasToc?: boolean;
   // hreflang(<link rel="alternate">) 생성용: 언어별 "이 페이지에 대응하는" 절대경로 pathname.
   // 글 상세 페이지에서 넘기면 실제로 번역이 존재하는 언어만 상호참조하는 hreflang 세트가 만들어진다.
   // 넘기지 않으면(홈/카테고리/개인정보처리방침 등 항상 9개 언어가 다 있다고 볼 수 있는 페이지)
@@ -37,6 +41,7 @@ const {
   availableLangs,
   slugOverrides,
   showSidebar = false,
+  hasToc = false,
   hreflangPaths,
   ogImage,
   ogType = 'website',
@@ -194,11 +199,12 @@ const isDev = import.meta.env.DEV;
   </header>
 
   {showSidebar ? (
-    <div class="page-with-sidebar">
+    <div class={`page-with-sidebar${hasToc ? ' has-toc' : ''}`}>
       <PopularSidebar lang={currentLang} />
       <main class="page-shell page-shell-with-sidebar">
         <slot />
       </main>
+      <slot name="toc" />
     </div>
   ) : (
     <main class="page-shell">

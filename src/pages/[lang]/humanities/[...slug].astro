@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import TranslationReport from '../../../components/TranslationReport.astro';
+import TocSidebar from '../../../components/TocSidebar.astro';
 import { getTranslations, LOCALE_PREFIX_RE } from '../../../i18n/utils';
 import { formatDate } from '../../../i18n/formatDate';
 
@@ -14,8 +15,10 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content, headings } = await entry.render();
 const cleanSlug = entry.slug.replace(LOCALE_PREFIX_RE, '');
+// 목차는 h2(depth 2)만 대상으로 한다 - 글이 길어져도 목차 자체가 너무 장황해지지 않게.
+const hasToc = headings.some((h) => h.depth === 2);
 const translations = await getTranslations(entry, 'humanities');
 const availableLangs = Object.keys(translations) as Array<typeof entry.data.lang>;
 // translationKey는 같아도 언어마다 파일명(slug)이 다를 수 있어서, 언어전환 링크가
@@ -46,6 +49,7 @@ const subcategoryLabel: Record<string, string> = {
   ogImage={entry.data.heroImage}
   ogType="article"
   showSidebar
+  hasToc={hasToc}
 >
   <div class="post-meta-bar">
     <span class="post-tag humanities">인문학 · {subcategoryLabel[entry.data.subcategory]}</span>
@@ -55,9 +59,11 @@ const subcategoryLabel: Record<string, string> = {
     <time class="post-date">{formatDate(entry.data.publishedAt, entry.data.lang)}</time>
     <span class="post-views" data-slug={cleanSlug}>조회수 불러오는 중...</span>
   </div>
+  <TocSidebar headings={headings} variant="inline" lang={entry.data.lang} />
   <article class="post-body">
     <Content />
   </article>
+  <TocSidebar slot="toc" headings={headings} variant="sidebar" lang={entry.data.lang} />
   <div class="like-bar">
     <button class="like-button" data-slug={cleanSlug} aria-pressed="false">
       <span class="like-icon">♡</span>
@@ -128,5 +134,28 @@ const subcategoryLabel: Record<string, string> = {
           likeBtn.removeAttribute('disabled');
         });
     });
+  }
+
+  // ---------- 목차(TOC) 스크롤 하이라이트 ----------
+  // 사이드바(데스크탑)와 인라인 접이식(모바일) 두 군데에 목차 링크가 각각 렌더링되어 있으므로
+  // data-toc-link 속성으로 둘 다 한 번에 선택해서 같이 갱신한다.
+  const tocHeadings = Array.from(document.querySelectorAll('.post-body h2[id]'));
+  const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
+  if (tocHeadings.length > 0 && tocLinks.length > 0) {
+    const setActiveToc = (id) => {
+      tocLinks.forEach((a) => {
+        a.classList.toggle('active', a.getAttribute('data-toc-target') === id);
+      });
+    };
+    const tocObserver = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length > 0) {
+          setActiveToc(visible[0].target.id);
+        }
+      },
+      { rootMargin: '0px 0px -70% 0px', threshold: 0 }
+    );
+    tocHeadings.forEach((el) => tocObserver.observe(el));
   }
 </script>

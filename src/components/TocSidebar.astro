@@ -1,0 +1,54 @@
+---
+// 글 목차(Table of Contents). entry.render()가 반환하는 headings 배열(depth, slug, text)을
+// 받아서 h2(depth===2)만 필터링해 렌더링한다 (h3까지 넣으면 긴 글에서 항목이 너무 많아짐).
+//
+// 데스크탑/모바일 두 군데에서 각각 다른 위치에 나타나야 해서(데스크탑: 우측 sticky 사이드바,
+// 모바일: 본문 상단 접이식 박스) DOM에 두 번 렌더링하고 CSS 미디어쿼리로 한쪽만 보이게 한다.
+// variant prop으로 어느 쪽인지 구분 - 마크업은 거의 같고 감싸는 wrapper 태그만 다르다
+// (사이드바는 <aside>로 sticky 배치, 인라인은 <details>로 네이티브 접기/펼치기 지원).
+//
+// 스크롤에 따라 현재 읽고 있는 섹션 링크를 강조하는 기능은 이 컴포넌트가 아니라
+// 상위 페이지([...slug].astro)의 스크립트에서 IntersectionObserver로 처리한다 -
+// 사이드바/인라인 두 변형의 링크를 한 번에 같이 갱신해야 하기 때문.
+type Heading = { depth: number; slug: string; text: string };
+
+interface Props {
+  headings: Heading[];
+  variant: 'sidebar' | 'inline';
+  lang?: string;
+}
+
+const { headings, variant, lang = 'ko' } = Astro.props;
+const items = headings.filter((h) => h.depth === 2);
+
+const t =
+  lang === 'ko' ? { toc: '목차' } : { toc: 'Contents' };
+---
+
+{items.length > 0 && (
+  variant === 'sidebar' ? (
+    <aside class="toc-sidebar" aria-label={t.toc}>
+      <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">{t.toc}</p>
+        <ol class="toc-list">
+          {items.map((h) => (
+            <li>
+              <a href={`#${h.slug}`} data-toc-link data-toc-target={h.slug}>{h.text}</a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </aside>
+  ) : (
+    <details class="toc-inline" open>
+      <summary class="toc-inline-summary">{t.toc}</summary>
+      <ol class="toc-list">
+        {items.map((h) => (
+          <li>
+            <a href={`#${h.slug}`} data-toc-link data-toc-target={h.slug}>{h.text}</a>
+          </li>
+        ))}
+      </ol>
+    </details>
+  )
+)}
