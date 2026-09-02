@@ -17,8 +17,8 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content, headings } = await entry.render();
 const cleanSlug = entry.slug.replace(LOCALE_PREFIX_RE, '');
-// 목차는 h2(depth 2)만 대상으로 한다 - 글이 길어져도 목차 자체가 너무 장황해지지 않게.
-const hasToc = headings.some((h) => h.depth === 2);
+// 목차는 h1(장 제목)과 h2(소제목)를 대상으로 한다 - TocSidebar와 동일 기준.
+const hasToc = headings.some((h) => h.depth === 1 || h.depth === 2);
 const translations = await getTranslations(entry, 'it');
 const availableLangs = Object.keys(translations) as Array<typeof entry.data.lang>;
 // translationKey는 같아도 언어마다 파일명(slug)이 다를 수 있어서, 언어전환 링크가

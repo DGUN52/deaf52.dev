@@ -1,6 +1,9 @@
 ---
 // 글 목차(Table of Contents). entry.render()가 반환하는 headings 배열(depth, slug, text)을
-// 받아서 h2(depth===2)만 필터링해 렌더링한다 (h3까지 넣으면 긴 글에서 항목이 너무 많아짐).
+// 받아서 h1(depth===1)과 h2(depth===2)까지 렌더링한다 - 이 사이트 글들이 대분류 구분에
+// "#"(h1)을, 그 아래 소분류에 "##"(h2)을 섞어 쓰는 경우가 있어서(글 자체 title은 프론트매터에서
+// 따로 렌더링되므로 본문 안의 h1은 실질적으로 "장" 수준 제목 역할) h1도 포함해야 목차가 실제
+// 글 구조를 놓치지 않는다. h3까지 넣으면 항목이 너무 많아지므로 거기까지는 안 넣는다.
 //
 // 데스크탑/모바일 두 군데에서 각각 다른 위치에 나타나야 해서(데스크탑: 우측 sticky 사이드바,
 // 모바일: 본문 상단 접이식 박스) DOM에 두 번 렌더링하고 CSS 미디어쿼리로 한쪽만 보이게 한다.
@@ -19,7 +22,7 @@ interface Props {
 }
 
 const { headings, variant, lang = 'ko' } = Astro.props;
-const items = headings.filter((h) => h.depth === 2);
+const items = headings.filter((h) => h.depth === 1 || h.depth === 2);
 
 const t =
   lang === 'ko' ? { toc: '목차' } : { toc: 'Contents' };
