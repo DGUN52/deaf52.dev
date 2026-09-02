@@ -118,13 +118,35 @@ import '../../../styles/global.css';
         </label>
       </div>
 
+      <div class="editor-img-helper">
+        <label>
+          이미지 파일명 삽입 (content 저장소 <code>public/images/</code>에 이미 넣어둔 파일)
+          <div class="editor-img-helper-row">
+            <input type="text" id="img-alt" placeholder="설명(alt)" />
+            <input type="text" id="img-filename" placeholder="파일명 (예: photo1.jpg)" />
+            <button type="button" id="img-insert">본문에 삽입</button>
+          </div>
+        </label>
+      </div>
+
+      <div class="editor-body-toolbar">
+        <button type="button" id="tb-bold" title="굵게"><strong>B</strong></button>
+        <button type="button" id="tb-italic" title="기울임"><em>I</em></button>
+        <button type="button" id="tb-link" title="링크">🔗</button>
+        <button type="button" id="tb-image" title="이미지">🖼</button>
+        <span class="editor-body-toolbar-spacer"></span>
+        <button type="button" id="tb-preview">미리보기</button>
+      </div>
+
       <label class="editor-body-field">
         본문 (Markdown)
         <textarea id="ed-body" rows="20" placeholder="# 제목&#10;&#10;본문을 마크다운으로 작성하세요..."></textarea>
+        <div id="ed-preview" class="editor-preview" hidden></div>
       </label>
 
       <div class="editor-actions">
         <button type="button" id="ed-download">.md 파일 다운로드</button>
+        <button type="button" id="ed-clear-draft">임시저장 초기화</button>
         <span class="editor-hint">
           다운로드한 파일을 <code>content/{'{'}category{'}'}/{'{'}lang{'}'}/</code> 폴더에 넣고 git commit/push 하세요.
         </span>
@@ -133,6 +155,8 @@ import '../../../styles/global.css';
   </main>
 </body>
 </html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" is:inline></script>
 
 <style>
   .editor-shell {
@@ -292,6 +316,128 @@ import '../../../styles/global.css';
     padding: 0.1rem 0.3rem;
     border-radius: 3px;
   }
+
+  .editor-img-helper {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    background: #fafafa;
+  }
+
+  .editor-img-helper label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .editor-img-helper code {
+    background: var(--tech-soft);
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+  }
+
+  .editor-img-helper-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .editor-img-helper-row input {
+    flex: 1 1 160px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .editor-img-helper-row button {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .editor-img-helper-row button:hover {
+    border-color: var(--tech);
+    color: var(--tech);
+  }
+
+  .editor-body-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: -0.75rem;
+  }
+
+  .editor-body-toolbar button {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    min-width: 2.1rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .editor-body-toolbar button:hover {
+    border-color: var(--tech);
+    color: var(--tech);
+  }
+
+  .editor-body-toolbar button.active {
+    background: var(--tech);
+    border-color: var(--tech);
+    color: #fff;
+  }
+
+  .editor-body-toolbar-spacer {
+    flex: 1;
+  }
+
+  .editor-preview {
+    font-family: var(--font-sans, sans-serif);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    min-height: 200px;
+    overflow-wrap: break-word;
+  }
+
+  .editor-preview img {
+    max-width: 100%;
+  }
+
+  .editor-preview pre {
+    background: var(--tech-soft);
+    padding: 0.75rem;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  #ed-clear-draft {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  #ed-clear-draft:hover {
+    border-color: #b23b3b;
+    color: #b23b3b;
+  }
 </style>
 
 <script>
@@ -302,10 +448,25 @@ import '../../../styles/global.css';
   const loadListBtn = document.getElementById('ed-load-list')!;
   const statusEl = document.getElementById('ed-status')!;
   const downloadBtn = document.getElementById('ed-download')!;
+  const clearDraftBtn = document.getElementById('ed-clear-draft')!;
   const bodyEl = document.getElementById('ed-body') as HTMLTextAreaElement;
+  const previewEl = document.getElementById('ed-preview')!;
+  const previewToggleBtn = document.getElementById('tb-preview')!;
+
+  const boldBtn = document.getElementById('tb-bold')!;
+  const italicBtn = document.getElementById('tb-italic')!;
+  const linkBtn = document.getElementById('tb-link')!;
+  const imageBtn = document.getElementById('tb-image')!;
+
+  const imgAltInput = document.getElementById('img-alt') as HTMLInputElement;
+  const imgFilenameInput = document.getElementById('img-filename') as HTMLInputElement;
+  const imgInsertBtn = document.getElementById('img-insert')!;
 
   const subcategoryWrap = document.getElementById('fm-subcategory-wrap')!;
   const techWrap = document.getElementById('fm-tech-wrap')!;
+
+  // marked (CDN, 이 관리자 페이지에만 로드됨 - 사이트 다른 페이지 로딩 속도엔 영향 없음)
+  declare const marked: { parse(md: string): string };
 
   const fields = {
     title: document.getElementById('fm-title') as HTMLInputElement,
@@ -469,9 +630,201 @@ import '../../../styles/global.css';
     );
   }
 
+  // ---------- 서식 툴바 (굵게/기울임/링크/이미지) ----------
+  // textarea의 현재 선택 영역을 감싸거나, 선택이 없으면 플레이스홀더 템플릿을 커서 위치에 삽입한다.
+  function wrapSelection(before: string, after: string, placeholder: string) {
+    const start = bodyEl.selectionStart;
+    const end = bodyEl.selectionEnd;
+    const selected = bodyEl.value.slice(start, end) || placeholder;
+    const next = bodyEl.value.slice(0, start) + before + selected + after + bodyEl.value.slice(end);
+    bodyEl.value = next;
+    const cursorStart = start + before.length;
+    const cursorEnd = cursorStart + selected.length;
+    bodyEl.focus();
+    bodyEl.setSelectionRange(cursorStart, cursorEnd);
+    scheduleAutosave();
+  }
+
+  function insertAtCursor(text: string) {
+    const start = bodyEl.selectionStart;
+    const end = bodyEl.selectionEnd;
+    bodyEl.value = bodyEl.value.slice(0, start) + text + bodyEl.value.slice(end);
+    const pos = start + text.length;
+    bodyEl.focus();
+    bodyEl.setSelectionRange(pos, pos);
+    scheduleAutosave();
+  }
+
+  boldBtn.addEventListener('click', () => wrapSelection('**', '**', '굵은 텍스트'));
+  italicBtn.addEventListener('click', () => wrapSelection('*', '*', '기울임 텍스트'));
+  linkBtn.addEventListener('click', () => {
+    const start = bodyEl.selectionStart;
+    const end = bodyEl.selectionEnd;
+    const selected = bodyEl.value.slice(start, end);
+    if (selected) {
+      wrapSelection('[', '](url)', selected);
+    } else {
+      insertAtCursor('[링크 텍스트](url)');
+    }
+  });
+  imageBtn.addEventListener('click', () => insertAtCursor('![설명](/images/파일명.jpg)'));
+
+  // ---------- 이미지 파일명 삽입 도우미 ----------
+  // 실제 이미지 파일 업로드 기능은 없다 (private content repo에 쓰기 권한이 없으므로).
+  // 관리자가 이미지를 미리 content 저장소의 public/images/ 에 직접 넣어둔 뒤,
+  // 여기서는 그 파일명으로 올바른 형식의 ![]() 마크다운 태그만 커서 위치에 삽입해준다.
+  imgInsertBtn.addEventListener('click', () => {
+    const filename = imgFilenameInput.value.trim();
+    if (!filename) {
+      setStatus('이미지 파일명을 입력하세요.', true);
+      return;
+    }
+    const alt = imgAltInput.value.trim() || filename;
+    const path = filename.startsWith('/') ? filename : `/images/${filename}`;
+    insertAtCursor(`![${alt}](${path})`);
+    setStatus(`이미지 태그 삽입됨: ${path} (파일은 미리 content 저장소 public/images/ 에 넣어두세요)`);
+    imgAltInput.value = '';
+    imgFilenameInput.value = '';
+  });
+
+  // ---------- 미리보기 토글 ----------
+  // 실시간 렌더링 대신 버튼 토글 방식을 택했다: 긴 글에서는 입력할 때마다 마크다운을
+  // 다시 파싱/렌더링하는 비용이 누적되므로, 필요할 때만 눌러서 확인하는 쪽이 가볍다.
+  let previewOn = false;
+
+  function renderPreview() {
+    try {
+      previewEl.innerHTML = marked.parse(bodyEl.value || '_(본문 없음)_');
+    } catch {
+      previewEl.textContent = '미리보기 렌더링 실패';
+    }
+  }
+
+  previewToggleBtn.addEventListener('click', () => {
+    previewOn = !previewOn;
+    previewToggleBtn.classList.toggle('active', previewOn);
+    previewToggleBtn.textContent = previewOn ? '편집으로 돌아가기' : '미리보기';
+    if (previewOn) {
+      renderPreview();
+      bodyEl.hidden = true;
+      previewEl.hidden = false;
+    } else {
+      bodyEl.hidden = false;
+      previewEl.hidden = true;
+    }
+  });
+
+  // ---------- 자동저장 (localStorage) ----------
+  // 브라우저 탭이 실수로 닫히거나 새로고침되어도 작업 내용을 잃지 않도록,
+  // 폼 필드+본문을 주기적으로(디바운스) localStorage에 저장해둔다.
+  // 서버에는 저장되지 않으며 이 브라우저에만 남는 임시 초안이다.
+  const DRAFT_KEY = 'deaf52-editor-draft';
+  let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function collectDraft() {
+    return {
+      category: categorySelect.value,
+      existing: existingSelect.value,
+      fields: {
+        title: fields.title.value,
+        description: fields.description.value,
+        lang: fields.lang.value,
+        translationKey: fields.translationKey.value,
+        slug: fields.slug.value,
+        publishedAt: fields.publishedAt.value,
+        tech: fields.tech.value,
+        subcategory: fields.subcategory.value,
+        heroImage: fields.heroImage.value,
+        draft: fields.draft.checked,
+      },
+      body: bodyEl.value,
+      savedAt: new Date().toISOString(),
+    };
+  }
+
+  function saveDraft() {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft()));
+    } catch {
+      // localStorage 사용 불가(프라이빗 모드 등) - 조용히 무시, 자동저장만 안 될 뿐 편집은 계속 가능
+    }
+  }
+
+  function scheduleAutosave() {
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(saveDraft, 800);
+  }
+
+  function clearDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // 무시
+    }
+    setStatus('임시저장된 초안을 지웠습니다.');
+  }
+
+  function restoreDraftIfAny() {
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(DRAFT_KEY);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw);
+      const when = draft.savedAt ? new Date(draft.savedAt).toLocaleString('ko-KR', { hour12: false }) : '알 수 없음';
+      if (!confirm(`임시저장된 초안이 있습니다 (${when} 저장).\n불러올까요? (취소하면 초안은 유지되되 무시합니다)`)) {
+        return;
+      }
+      categorySelect.value = draft.category ?? 'it';
+      updateCategoryFields();
+      const f = draft.fields ?? {};
+      fields.title.value = f.title ?? '';
+      fields.description.value = f.description ?? '';
+      fields.lang.value = f.lang ?? 'ko';
+      fields.translationKey.value = f.translationKey ?? '';
+      fields.slug.value = f.slug ?? '';
+      fields.publishedAt.value = f.publishedAt ?? new Date().toISOString().slice(0, 10);
+      fields.tech.value = f.tech ?? '';
+      fields.subcategory.value = f.subcategory ?? 'review';
+      fields.heroImage.value = f.heroImage ?? '';
+      fields.draft.checked = !!f.draft;
+      bodyEl.value = draft.body ?? '';
+      setStatus('임시저장된 초안을 불러왔습니다.');
+    } catch {
+      // 손상된 초안 데이터 - 무시
+    }
+  }
+
+  // 입력 시마다 디바운스 자동저장 (폼 필드 + 본문 전체)
+  [
+    fields.title,
+    fields.description,
+    fields.lang,
+    fields.translationKey,
+    fields.slug,
+    fields.publishedAt,
+    fields.tech,
+    fields.subcategory,
+    fields.heroImage,
+    fields.draft,
+  ].forEach((el) => {
+    el.addEventListener('input', scheduleAutosave);
+    el.addEventListener('change', scheduleAutosave);
+  });
+  bodyEl.addEventListener('input', () => {
+    scheduleAutosave();
+    if (previewOn) renderPreview();
+  });
+
+  clearDraftBtn.addEventListener('click', clearDraft);
+
   categorySelect.addEventListener('change', () => {
     updateCategoryFields();
     loadList();
+    scheduleAutosave();
   });
   existingSelect.addEventListener('change', loadExisting);
   loadListBtn.addEventListener('click', loadList);
@@ -480,4 +833,5 @@ import '../../../styles/global.css';
   updateCategoryFields();
   resetForm();
   loadList();
+  restoreDraftIfAny();
 </script>
