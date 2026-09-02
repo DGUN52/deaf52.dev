@@ -35,7 +35,7 @@ const t =
         <p class="toc-sidebar-title">{t.toc}</p>
         <ol class="toc-list">
           {items.map((h) => (
-            <li>
+            <li class={`toc-depth-${h.depth}`}>
               <a href={`#${h.slug}`} data-toc-link data-toc-target={h.slug}>{h.text}</a>
             </li>
           ))}
@@ -47,7 +47,7 @@ const t =
       <summary class="toc-inline-summary">{t.toc}</summary>
       <ol class="toc-list">
         {items.map((h) => (
-          <li>
+          <li class={`toc-depth-${h.depth}`}>
             <a href={`#${h.slug}`} data-toc-link data-toc-target={h.slug}>{h.text}</a>
           </li>
         ))}

@@ -22,6 +22,9 @@
 
 html {
   background: var(--paper);
+  /* 목차 링크 클릭 시 부드럽게 스크롤 이동 (헤더가 sticky/fixed가 아니라서
+     별도 scroll-margin-top 보정 없이 이 한 줄로 충분하다). */
+  scroll-behavior: smooth;
 }
 
 body {
@@ -1470,6 +1473,29 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   color: var(--tech);
   font-weight: 600;
   border-left-color: var(--tech);
+}
+
+/* 목차 계층 표시: h1(장 제목)은 기본 스타일, h2(소제목)는 들여쓰기 + 살짝 작은 글씨로
+   하위 항목임을 시각적으로 구분한다. */
+.toc-list li.toc-depth-1 {
+  margin-top: 0.3rem;
+}
+
+.toc-list li.toc-depth-1:first-child {
+  margin-top: 0;
+}
+
+.toc-list li.toc-depth-1 a {
+  font-weight: 600;
+}
+
+.toc-list li.toc-depth-2 {
+  margin-left: 0.9rem;
+}
+
+.toc-list li.toc-depth-2 a {
+  font-size: 0.78rem;
+  font-weight: 400;
 }
 
 /* ---------- TOC 접이식 박스 - 모바일 전용, 본문 상단에 표시 ---------- */
