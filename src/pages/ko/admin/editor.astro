@@ -24,125 +24,127 @@ import '../../../styles/global.css';
 </head>
 <body>
   <main class="editor-shell">
-    <h1>글 에디터</h1>
-    <p class="editor-sub">
-      <a href="/ko/admin/reports">← 번역 신고 관리로</a>
-    </p>
-
-    <div class="editor-toolbar">
-      <label>
-        카테고리
-        <select id="ed-category">
-          <option value="it">IT기술</option>
-          <option value="humanities">인문학</option>
-        </select>
-      </label>
-
-      <label>
-        기존 글 불러오기
-        <select id="ed-existing">
-          <option value="">— 새 글 작성 —</option>
-        </select>
-      </label>
-
-      <button type="button" id="ed-load-list">목록 새로고침</button>
+    <div class="editor-head">
+      <h1>글 에디터</h1>
+      <a href="/ko/admin/reports" class="editor-sub-link">← 번역 신고 관리로</a>
     </div>
 
-    <p id="ed-status" class="editor-status"></p>
+    <div class="editor-toolbar">
+      <select id="ed-category" title="카테고리">
+        <option value="it">IT기술</option>
+        <option value="humanities">인문학</option>
+      </select>
+      <select id="ed-existing" title="기존 글 불러오기">
+        <option value="">— 새 글 작성 —</option>
+      </select>
+      <button type="button" id="ed-load-list" title="목록 새로고침">⟳</button>
+      <span class="editor-toolbar-hint">"새 글 작성" 상태에서 .md 파일을 드래그하면 불러옵니다</span>
+      <span id="ed-status" class="editor-status"></span>
+    </div>
 
     <form id="ed-form" class="editor-form">
-      <div class="editor-grid">
-        <label>
-          제목 (title)
-          <input type="text" id="fm-title" required />
-        </label>
+      <div class="editor-meta-block">
+        <div class="editor-grid">
+          <label class="field-wide">
+            제목 (title)
+            <input type="text" id="fm-title" required />
+          </label>
 
-        <label>
-          설명 (description)
-          <input type="text" id="fm-description" required />
-        </label>
+          <label class="field-wide">
+            설명 (description)
+            <input type="text" id="fm-description" required />
+          </label>
 
-        <label>
-          언어 (lang)
-          <select id="fm-lang">
-            <option value="ko">ko</option>
-            <option value="en">en</option>
-            <option value="ja">ja</option>
-            <option value="zh">zh</option>
-            <option value="in">in</option>
-            <option value="de">de</option>
-            <option value="uk">uk</option>
-            <option value="il">il</option>
-            <option value="tw">tw</option>
-          </select>
-        </label>
+          <label class="field-narrow">
+            언어
+            <select id="fm-lang">
+              <option value="ko">ko</option>
+              <option value="en">en</option>
+              <option value="ja">ja</option>
+              <option value="zh">zh</option>
+              <option value="in">in</option>
+              <option value="de">de</option>
+              <option value="uk">uk</option>
+              <option value="il">il</option>
+              <option value="tw">tw</option>
+            </select>
+          </label>
 
-        <label>
-          translationKey
-          <input type="text" id="fm-translationKey" required />
-        </label>
+          <label class="field-narrow">
+            발행일
+            <input type="date" id="fm-publishedAt" required />
+          </label>
 
-        <label>
-          slug (파일명, 확장자 제외)
-          <input type="text" id="fm-slug" required />
-        </label>
+          <label class="field-narrow editor-checkbox-field">
+            <input type="checkbox" id="fm-draft" />
+            draft
+          </label>
 
-        <label>
-          발행일 (publishedAt)
-          <input type="date" id="fm-publishedAt" required />
-        </label>
+          <label class="field-wide">
+            slug (파일명, 확장자 제외)
+            <input type="text" id="fm-slug" required />
+          </label>
 
-        <label class="editor-tech-field" id="fm-tech-wrap">
-          기술 태그 (tech, 쉼표로 구분)
-          <input type="text" id="fm-tech" placeholder="Docker, MongoDB" />
-        </label>
+          <label class="field-wide">
+            translationKey
+            <input type="text" id="fm-translationKey" required />
+          </label>
 
-        <label class="editor-subcategory-field" id="fm-subcategory-wrap" hidden>
-          소분류 (subcategory)
-          <select id="fm-subcategory">
-            <option value="review">review</option>
-            <option value="reflection">reflection</option>
-            <option value="fiction">fiction</option>
-            <option value="nonfiction">nonfiction</option>
-          </select>
-        </label>
+          <label class="field-wide editor-heroimage-field">
+            heroImage (선택)
+            <div class="editor-combo-row">
+              <select id="fm-heroImage-select">
+                <option value="">— 직접 입력 —</option>
+              </select>
+              <button type="button" id="hero-browse" class="editor-browse-btn" title="컴퓨터에서 파일 선택 (파일명만 가져옵니다)">📂</button>
+              <input type="file" id="hero-file-picker" accept="image/*" hidden />
+              <input type="text" id="fm-heroImage" placeholder="/images/xxx.jpg" />
+            </div>
+          </label>
+        </div>
 
-        <label>
-          heroImage (선택, 예: /images/xxx.jpg)
-          <input type="text" id="fm-heroImage" />
-        </label>
-
-        <label class="editor-checkbox-field">
-          <input type="checkbox" id="fm-draft" />
-          draft (초안으로 저장, 배포 시 숨김)
-        </label>
-      </div>
-
-      <div class="editor-img-helper">
-        <label>
-          이미지 파일명 삽입 (content 저장소 <code>public/images/</code>에 이미 넣어둔 파일)
-          <div class="editor-img-helper-row">
-            <input type="text" id="img-alt" placeholder="설명(alt)" />
-            <input type="text" id="img-filename" placeholder="파일명 (예: photo1.jpg)" />
-            <button type="button" id="img-insert">본문에 삽입</button>
+        <div class="editor-tech-field" id="fm-tech-wrap">
+          <div class="editor-tech-label-row">
+            <span class="editor-tech-label">기술 태그 (tech)</span>
+            <button type="button" id="tags-refresh" title="기존 IT 글들을 훑어서 태그 목록을 새로 만듭니다">태그 목록 갱신</button>
           </div>
-        </label>
+          <div id="tech-checkbox-list" class="editor-tech-checkbox-list"></div>
+          <input type="text" id="fm-tech-extra" placeholder="목록에 없는 태그 직접 입력 (쉼표로 구분)" />
+        </div>
+
+        <div class="editor-img-helper">
+          <select id="img-select" title="이미지 선택">
+            <option value="">— 직접 입력 —</option>
+          </select>
+          <button type="button" id="img-browse" class="editor-browse-btn" title="컴퓨터에서 파일 선택 (파일명만 가져옵니다)">📂</button>
+          <input type="file" id="img-file-picker" accept="image/*" hidden />
+          <input type="text" id="img-filename" placeholder="파일명 (예: photo1.jpg)" />
+          <input type="text" id="img-alt" placeholder="설명(alt)" />
+          <button type="button" id="img-insert">본문에 삽입</button>
+        </div>
       </div>
 
       <div class="editor-body-toolbar">
-        <button type="button" id="tb-bold" title="굵게"><strong>B</strong></button>
-        <button type="button" id="tb-italic" title="기울임"><em>I</em></button>
+        <button type="button" id="tb-bold" title="굵게 (Ctrl+B)"><strong>B</strong></button>
+        <button type="button" id="tb-italic" title="기울임 (Ctrl+I)"><em>I</em></button>
+        <button type="button" id="tb-underline" title="밑줄 (Ctrl+U)"><u>U</u></button>
+        <button type="button" id="tb-strike" title="취소선 (Ctrl+Shift+S)"><s>S</s></button>
         <button type="button" id="tb-link" title="링크">🔗</button>
         <button type="button" id="tb-image" title="이미지">🖼</button>
         <span class="editor-body-toolbar-spacer"></span>
-        <button type="button" id="tb-preview">미리보기</button>
+        <button type="button" id="tb-preview">미리보기 숨기기</button>
       </div>
 
-      <label class="editor-body-field">
-        본문 (Markdown)
-        <textarea id="ed-body" rows="20" placeholder="# 제목&#10;&#10;본문을 마크다운으로 작성하세요..."></textarea>
-        <div id="ed-preview" class="editor-preview" hidden></div>
-      </label>
+      <div class="editor-body-split" id="ed-body-split">
+        <label class="editor-body-field">
+          본문 (Markdown)
+          <textarea id="ed-body" rows="20" placeholder="# 제목&#10;&#10;본문을 마크다운으로 작성하세요..."></textarea>
+        </label>
+        <div class="editor-preview-field">
+          미리보기
+          <div id="ed-preview" class="editor-preview"></div>
+        </div>
+      </div>
 
       <div class="editor-actions">
         <button type="button" id="ed-download">.md 파일 다운로드</button>
@@ -152,67 +154,69 @@ import '../../../styles/global.css';
         </span>
       </div>
     </form>
+
+    <div id="ed-drop-overlay" class="editor-drop-overlay" hidden>
+      <div class="editor-drop-overlay-box">📄 .md 파일을 여기에 놓으세요</div>
+    </div>
   </main>
 </body>
 </html>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" is:inline></script>
 
-<style>
+<style is:global>
   .editor-shell {
-    max-width: 900px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 2rem 1rem 4rem;
+    padding: 0.75rem 1.5rem 2rem;
     font-family: var(--font-mono);
   }
 
-  .editor-shell h1 {
-    font-size: 1.4rem;
-    margin-bottom: 0.5rem;
+  .editor-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--line);
   }
 
-  .editor-sub {
-    font-size: 0.85rem;
-    margin-bottom: 1.5rem;
+  .editor-head h1 {
+    font-size: 1.1rem;
+    margin: 0;
   }
 
-  .editor-sub a {
+  .editor-sub-link {
+    font-size: 0.76rem;
     color: var(--tech);
+    white-space: nowrap;
   }
 
   .editor-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-end;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: #fafafa;
-  }
-
-  .editor-toolbar label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    font-size: 0.8rem;
-    color: var(--ink-soft);
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.6rem;
   }
 
   .editor-toolbar select,
   .editor-toolbar button {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    padding: 0.4rem 0.6rem;
+    font-size: 0.82rem;
+    padding: 0.3rem 0.5rem;
     border: 1px solid var(--line);
     border-radius: 4px;
     background: #fff;
   }
 
+  .editor-toolbar select {
+    max-width: 200px;
+  }
+
   .editor-toolbar button {
     cursor: pointer;
-    height: fit-content;
   }
 
   .editor-toolbar button:hover {
@@ -220,11 +224,15 @@ import '../../../styles/global.css';
     color: var(--tech);
   }
 
-  .editor-status {
-    font-size: 0.8rem;
+  .editor-toolbar-hint {
+    font-size: 0.74rem;
     color: var(--ink-soft);
-    min-height: 1.2em;
-    margin-bottom: 1rem;
+    opacity: 0.75;
+  }
+
+  .editor-status {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
   }
 
   .editor-status.error {
@@ -234,44 +242,97 @@ import '../../../styles/global.css';
   .editor-form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.65rem;
+  }
+
+  /* 상단 메타정보 블록(제목/설명/slug 등 + 기술태그 + 이미지 삽입도우미)을 하나로 묶어서
+     본문/미리보기처럼 넓은 폭을 쓸 필요가 없게 자체 max-width를 주고, 배경색으로 구분한다. */
+  .editor-meta-block {
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.75rem 0.9rem;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: 6px;
   }
 
   .editor-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px dashed var(--line);
   }
 
   .editor-grid label {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
-    font-size: 0.8rem;
+    gap: 0.25rem;
+    font-size: 0.78rem;
     color: var(--ink-soft);
+  }
+
+  .editor-grid .field-wide {
+    flex: 1 1 260px;
+  }
+
+  .editor-grid .field-narrow {
+    flex: 0 1 110px;
+  }
+
+  .editor-grid .editor-heroimage-field {
+    flex-basis: 100%;
   }
 
   .editor-checkbox-field {
     flex-direction: row !important;
     align-items: center;
-    gap: 0.5rem !important;
+    justify-content: center;
+    gap: 0.4rem !important;
+    flex: 0 0 auto !important;
+    padding: 0 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    align-self: stretch;
   }
 
   .editor-grid input,
   .editor-grid select {
     font-family: var(--font-mono);
-    font-size: 0.9rem;
-    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.55rem;
     border: 1px solid var(--line);
     border-radius: 4px;
   }
 
-  .editor-body-field {
+  .editor-body-split {
+    display: grid;
+    /* 1fr 단독으로는 grid 트랙의 min-width가 auto라서 폭이 넓은 이미지 같은 콘텐츠가
+       트랙 자체를 밀어 넘칠 수 있다 (아이템에 min-width:0을 줘도 트랙 레벨에서는 안 먹음).
+       minmax(0, 1fr)로 트랙 자체의 최소 폭을 0으로 고정해서 막는다. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .editor-body-split.preview-off {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-body-split.preview-off .editor-preview-field {
+    display: none;
+  }
+
+  .editor-body-field,
+  .editor-preview-field {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
     font-size: 0.8rem;
     color: var(--ink-soft);
+    min-width: 0;
   }
 
   .editor-body-field textarea {
@@ -282,6 +343,15 @@ import '../../../styles/global.css';
     border: 1px solid var(--line);
     border-radius: 4px;
     resize: vertical;
+    height: 100%;
+    min-height: 460px;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 860px) {
+    .editor-body-split {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .editor-actions {
@@ -318,62 +388,146 @@ import '../../../styles/global.css';
   }
 
   .editor-img-helper {
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    background: #fafafa;
-  }
-
-  .editor-img-helper label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    color: var(--ink-soft);
-  }
-
-  .editor-img-helper code {
-    background: var(--tech-soft);
-    padding: 0.05rem 0.3rem;
-    border-radius: 3px;
-  }
-
-  .editor-img-helper-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    align-items: center;
   }
 
-  .editor-img-helper-row input {
-    flex: 1 1 160px;
+  .editor-img-helper select,
+  .editor-img-helper input,
+  .editor-img-helper button {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    padding: 0.4rem 0.6rem;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.55rem;
     border: 1px solid var(--line);
     border-radius: 4px;
   }
 
-  .editor-img-helper-row button {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
-    border: 1px solid var(--line);
-    border-radius: 4px;
+  .editor-img-helper select {
+    max-width: 150px;
+  }
+
+  .editor-img-helper input {
+    flex: 1 1 130px;
+  }
+
+  .editor-img-helper button {
     background: #fff;
     cursor: pointer;
     white-space: nowrap;
   }
 
-  .editor-img-helper-row button:hover {
+  .editor-img-helper button:hover {
     border-color: var(--tech);
     color: var(--tech);
+  }
+
+  .editor-combo-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .editor-combo-row select {
+    flex: 0 0 130px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .editor-combo-row input {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .editor-browse-btn {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .editor-browse-btn:hover {
+    border-color: var(--tech);
+    color: var(--tech);
+  }
+
+  .editor-tech-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .editor-tech-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .editor-tech-label-row button {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .editor-tech-label-row button:hover {
+    border-color: var(--tech);
+    color: var(--tech);
+  }
+
+  .editor-tech-checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.8rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    min-height: 2.4rem;
+  }
+
+  .editor-tech-checkbox-list:empty::after {
+    content: '태그 목록이 비어 있습니다. "태그 목록 갱신"을 눌러 채우세요.';
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+  }
+
+  .editor-tech-checkbox-list label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+
+  #fm-tech-extra {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
   }
 
   .editor-body-toolbar {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    margin-bottom: -0.75rem;
   }
 
   .editor-body-toolbar button {
@@ -402,26 +556,123 @@ import '../../../styles/global.css';
     flex: 1;
   }
 
+  /* 아래 .editor-preview 하위 규칙들은 실제 사이트의 .post-body 타이포그래피(src/styles/global.css)를
+     그대로 옮겨온 것이다 - 에디터 미리보기가 실제 글 페이지와 다르게 보이던 문제를 고치기 위함.
+     사이트 쪽 .post-body 스타일이 바뀌면 여기도 같이 맞춰줘야 한다. */
   .editor-preview {
-    font-family: var(--font-sans, sans-serif);
-    font-size: 0.95rem;
-    line-height: 1.7;
+    font-family: var(--font-sans);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--ink);
     padding: 1rem 1.25rem;
     border: 1px solid var(--line);
     border-radius: 4px;
-    min-height: 200px;
+    min-height: 460px;
+    min-width: 0;
+    max-width: 100%;
     overflow-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
-  .editor-preview img {
-    max-width: 100%;
+  .editor-preview p {
+    margin: 0 0 1.2rem;
+  }
+
+  .editor-preview :not(pre) > code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--tech-soft);
+    color: var(--tech);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    word-break: break-word;
   }
 
   .editor-preview pre {
-    background: var(--tech-soft);
-    padding: 0.75rem;
-    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    background: var(--ink);
+    color: #e8e2d0;
+    padding: 1.1rem 1.25rem;
+    border-radius: 8px;
     overflow-x: auto;
+    margin: 0 0 1.5rem;
+  }
+
+  .editor-preview pre code {
+    font-family: inherit;
+    background: none;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    white-space: pre;
+  }
+
+  .editor-preview blockquote {
+    margin: 0 0 1.5rem;
+    padding: 0.2rem 1.1rem;
+    border-left: 3px solid var(--human);
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  .editor-preview ul,
+  .editor-preview ol {
+    margin: 0 0 1.2rem;
+    padding-left: 1.4rem;
+  }
+
+  .editor-preview li {
+    margin-bottom: 0.4rem;
+  }
+
+  .editor-preview h2,
+  .editor-preview h3 {
+    font-family: var(--font-serif);
+    margin: 2rem 0 1rem;
+  }
+
+  .editor-preview img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    width: auto;
+    border-radius: 6px;
+    margin: 1rem 0;
+  }
+
+  .editor-preview table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .editor-preview th,
+  .editor-preview td {
+    border: 1px solid var(--line);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+
+  .editor-preview th {
+    background: var(--paper-deep);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .editor-preview a {
+    color: var(--tech);
+    text-decoration-color: var(--line);
+    text-underline-offset: 2px;
+  }
+
+  .editor-preview a:hover {
+    text-decoration-color: var(--tech);
   }
 
   #ed-clear-draft {
@@ -438,6 +689,34 @@ import '../../../styles/global.css';
     border-color: #b23b3b;
     color: #b23b3b;
   }
+
+  .editor-drop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    cursor: pointer;
+  }
+
+  /* hidden 속성의 기본 동작(display:none)이 위 .editor-drop-overlay의 display:flex에
+     밀려 무시되는 문제 - 이 규칙으로 hidden일 때 확실히 안 보이게 강제한다. */
+  .editor-drop-overlay[hidden] {
+    display: none;
+  }
+
+  .editor-drop-overlay-box {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 2rem 3rem;
+    background: #fff;
+    border: 3px dashed var(--tech);
+    border-radius: 8px;
+    color: var(--tech);
+  }
 </style>
 
 <script>
@@ -452,18 +731,31 @@ import '../../../styles/global.css';
   const bodyEl = document.getElementById('ed-body') as HTMLTextAreaElement;
   const previewEl = document.getElementById('ed-preview')!;
   const previewToggleBtn = document.getElementById('tb-preview')!;
+  const bodySplitEl = document.getElementById('ed-body-split')!;
 
   const boldBtn = document.getElementById('tb-bold')!;
   const italicBtn = document.getElementById('tb-italic')!;
+  const underlineBtn = document.getElementById('tb-underline')!;
+  const strikeBtn = document.getElementById('tb-strike')!;
   const linkBtn = document.getElementById('tb-link')!;
   const imageBtn = document.getElementById('tb-image')!;
 
   const imgAltInput = document.getElementById('img-alt') as HTMLInputElement;
   const imgFilenameInput = document.getElementById('img-filename') as HTMLInputElement;
   const imgInsertBtn = document.getElementById('img-insert')!;
+  const imgSelect = document.getElementById('img-select') as HTMLSelectElement;
+  const imgBrowseBtn = document.getElementById('img-browse')!;
+  const imgFilePicker = document.getElementById('img-file-picker') as HTMLInputElement;
 
-  const subcategoryWrap = document.getElementById('fm-subcategory-wrap')!;
+  const heroBrowseBtn = document.getElementById('hero-browse')!;
+  const heroFilePicker = document.getElementById('hero-file-picker') as HTMLInputElement;
+
   const techWrap = document.getElementById('fm-tech-wrap')!;
+
+  const tagsRefreshBtn = document.getElementById('tags-refresh')!;
+  const techCheckboxList = document.getElementById('tech-checkbox-list')!;
+  const techExtraInput = document.getElementById('fm-tech-extra') as HTMLInputElement;
+  const heroImageSelect = document.getElementById('fm-heroImage-select') as HTMLSelectElement;
 
   // marked (CDN, 이 관리자 페이지에만 로드됨 - 사이트 다른 페이지 로딩 속도엔 영향 없음)
   declare const marked: { parse(md: string): string };
@@ -475,11 +767,147 @@ import '../../../styles/global.css';
     translationKey: document.getElementById('fm-translationKey') as HTMLInputElement,
     slug: document.getElementById('fm-slug') as HTMLInputElement,
     publishedAt: document.getElementById('fm-publishedAt') as HTMLInputElement,
-    tech: document.getElementById('fm-tech') as HTMLInputElement,
-    subcategory: document.getElementById('fm-subcategory') as HTMLSelectElement,
     heroImage: document.getElementById('fm-heroImage') as HTMLInputElement,
     draft: document.getElementById('fm-draft') as HTMLInputElement,
   };
+
+  // ---------- 기술 태그(tech): 체크박스 목록 + 직접입력 조합 ----------
+  // 체크박스 목록은 KV에 캐시된 기존 태그들(loadTagList)로 채워지고, 거기 없는 새 태그는
+  // fm-tech-extra 텍스트 입력(쉼표 구분)으로 추가한다. 최종 tech 배열은 이 둘을 합쳐서 만든다.
+  function getTechValue(): string {
+    const checked = Array.from(
+      techCheckboxList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')
+    ).map((cb) => cb.value);
+    const extra = techExtraInput.value
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    return [...new Set([...checked, ...extra])].join(', ');
+  }
+
+  function setTechValue(value: string) {
+    const wanted = new Set(
+      value
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+    );
+    const extras: string[] = [];
+    techCheckboxList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((cb) => {
+      cb.checked = wanted.has(cb.value);
+      if (cb.checked) wanted.delete(cb.value);
+    });
+    // 체크박스 목록에 없던 값들은 extra 입력창으로
+    extras.push(...wanted);
+    techExtraInput.value = extras.join(', ');
+  }
+
+  function renderTechCheckboxList(tags: string[]) {
+    // 갱신 시 현재 체크 상태는 보존한다 (목록 새로고침 중에도 이미 골라둔 태그가 풀리지 않도록).
+    const currentlyChecked = new Set(
+      Array.from(
+        techCheckboxList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')
+      ).map((cb) => cb.value)
+    );
+    techCheckboxList.innerHTML = '';
+    tags.forEach((tag) => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = tag;
+      cb.checked = currentlyChecked.has(tag);
+      cb.addEventListener('change', scheduleAutosave);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(tag));
+      techCheckboxList.appendChild(label);
+    });
+  }
+
+  async function loadTagList() {
+    try {
+      const res = await fetch('/api/editor/tags');
+      const data = await res.json();
+      renderTechCheckboxList(data.items ?? []);
+    } catch {
+      // 조용히 무시 - 태그 체크박스가 비어있으면 직접입력 필드로 계속 작업 가능
+    }
+  }
+
+  async function refreshTagList() {
+    setStatus('태그 목록 갱신 중... (기존 IT 글을 전부 훑습니다, 시간이 걸릴 수 있습니다)');
+    try {
+      const res = await fetch('/api/editor/tags/refresh', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? '요청 실패');
+      renderTechCheckboxList(data.items ?? []);
+      setStatus(`태그 목록 갱신 완료 (${data.items?.length ?? 0}개)`);
+    } catch (err) {
+      setStatus('태그 목록 갱신 실패: ' + (err instanceof Error ? err.message : String(err)), true);
+    }
+  }
+
+  // ---------- 이미지 목록(heroImage 선택, 본문 삽입 선택) ----------
+  async function loadImageList() {
+    try {
+      const res = await fetch('/api/editor/images');
+      const data = await res.json();
+      const items: string[] = data.items ?? [];
+      [heroImageSelect, imgSelect].forEach((select) => {
+        // 첫 번째("— 직접 입력 —") 옵션만 남기고 나머지를 새로 채운다.
+        select.innerHTML = '<option value="">— 직접 입력 —</option>';
+        items.forEach((name) => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          select.appendChild(opt);
+        });
+      });
+    } catch {
+      // 조용히 무시 - 이미지 select가 비어있으면 직접입력 필드로 계속 작업 가능
+    }
+  }
+
+  heroImageSelect.addEventListener('change', () => {
+    if (heroImageSelect.value) {
+      fields.heroImage.value = `/images/${heroImageSelect.value}`;
+      scheduleAutosave();
+    }
+  });
+
+  imgSelect.addEventListener('change', () => {
+    if (imgSelect.value) {
+      imgFilenameInput.value = imgSelect.value;
+    }
+  });
+
+  // ---------- 로컬 파일 선택창으로 파일명 가져오기 ----------
+  // 실제 업로드는 하지 않는다 (private content repo에 쓰기 권한이 없으므로).
+  // 탐색기/파인더 창을 열어 파일을 고르면 그 파일의 "이름"만 가져와서 입력창에 채워준다 -
+  // 관리자가 이미지를 이미 public/images/에 넣어뒀다는 전제 하에, 파일명 오타를 줄이기 위한 용도.
+  imgBrowseBtn.addEventListener('click', () => imgFilePicker.click());
+  imgFilePicker.addEventListener('change', () => {
+    const file = imgFilePicker.files?.[0];
+    if (file) {
+      imgFilenameInput.value = file.name;
+      imgSelect.value = '';
+      scheduleAutosave();
+    }
+    imgFilePicker.value = '';
+  });
+
+  heroBrowseBtn.addEventListener('click', () => heroFilePicker.click());
+  heroFilePicker.addEventListener('change', () => {
+    const file = heroFilePicker.files?.[0];
+    if (file) {
+      fields.heroImage.value = `/images/${file.name}`;
+      heroImageSelect.value = '';
+      scheduleAutosave();
+    }
+    heroFilePicker.value = '';
+  });
+
+  tagsRefreshBtn.addEventListener('click', refreshTagList);
+  techExtraInput.addEventListener('input', scheduleAutosave);
 
   function setStatus(msg: string, isError = false) {
     statusEl.textContent = msg;
@@ -488,7 +916,6 @@ import '../../../styles/global.css';
 
   function updateCategoryFields() {
     const isHumanities = categorySelect.value === 'humanities';
-    subcategoryWrap.hidden = !isHumanities;
     techWrap.hidden = isHumanities;
   }
 
@@ -499,9 +926,9 @@ import '../../../styles/global.css';
     fields.translationKey.value = '';
     fields.slug.value = '';
     fields.publishedAt.value = new Date().toISOString().slice(0, 10);
-    fields.tech.value = '';
-    fields.subcategory.value = 'review';
+    setTechValue('');
     fields.heroImage.value = '';
+    heroImageSelect.value = '';
     fields.draft.checked = false;
     bodyEl.value = '';
   }
@@ -561,24 +988,128 @@ import '../../../styles/global.css';
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '요청 실패');
 
-      const { fm, body } = parseFrontmatter(data.content as string);
-      fields.title.value = fm.title ?? '';
-      fields.description.value = fm.description ?? '';
-      fields.lang.value = fm.lang ?? 'ko';
-      fields.translationKey.value = fm.translationKey ?? '';
-      fields.slug.value = slug;
-      fields.publishedAt.value = (fm.publishedAt ?? '').slice(0, 10) || new Date().toISOString().slice(0, 10);
-      fields.tech.value = (fm.tech ?? '').replace(/^\[|\]$/g, '').replace(/"/g, '');
-      fields.subcategory.value = fm.subcategory ?? 'review';
-      fields.heroImage.value = fm.heroImage ?? '';
-      fields.draft.checked = fm.draft === 'true';
-      bodyEl.value = body;
-
+      applyMarkdownContent(data.content as string, slug);
       setStatus(`불러옴: ${category}/ko/${slug}.md`);
     } catch (err) {
       setStatus('글 불러오기 실패: ' + (err instanceof Error ? err.message : String(err)), true);
     }
   }
+
+  // frontmatter가 포함된 markdown 원문(raw)을 파싱해서 폼 전체에 채워 넣는다.
+  // GitHub API로 불러온 기존 글(loadExisting)과, 로컬 파일 드래그앤드롭(handleDroppedFile) 둘 다
+  // 이 함수를 공유해서 쓴다 - "raw markdown → 폼 채우기" 로직은 출처와 무관하게 동일하므로.
+  function applyMarkdownContent(raw: string, slugHint?: string) {
+    const { fm, body } = parseFrontmatter(raw);
+
+    // frontmatter의 category 필드로 IT/인문학 카테고리 select도 같이 맞춰준다.
+    if (fm.category === 'it' || fm.category === 'humanities') {
+      categorySelect.value = fm.category;
+      updateCategoryFields();
+    }
+
+    fields.title.value = fm.title ?? '';
+    fields.description.value = fm.description ?? '';
+    fields.lang.value = fm.lang ?? 'ko';
+    fields.translationKey.value = fm.translationKey ?? '';
+    fields.slug.value = slugHint ?? fm.slug ?? '';
+    fields.publishedAt.value = (fm.publishedAt ?? '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+    setTechValue((fm.tech ?? '').replace(/^\[|\]$/g, '').replace(/"/g, ''));
+    fields.heroImage.value = fm.heroImage ?? '';
+    heroImageSelect.value = '';
+    fields.draft.checked = fm.draft === 'true';
+    bodyEl.value = body;
+    if (previewOn) renderPreview();
+    scheduleAutosave();
+  }
+
+  // ---------- .md 파일 드래그앤드롭으로 불러오기 ----------
+  // "— 새 글 작성 —" 상태(existingSelect가 비어있을 때)에서만 활성화된다.
+  // 기존 글을 불러온 상태에서 실수로 다른 파일을 끌어다 놓아 덮어써버리는 사고를 막기 위함.
+  // 서버 업로드는 없다 - 브라우저에서 파일을 읽기만(FileReader) 하고 끝.
+  const dropOverlay = document.getElementById('ed-drop-overlay')!;
+
+  function dropEnabled(): boolean {
+    return existingSelect.value === '';
+  }
+
+  function hasFiles(e: DragEvent): boolean {
+    return !!e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files');
+  }
+
+  // 드롭이 끝난 직후(dropLocked) 얼마간은 dragover가 뒤늦게 한 번 더 들어와도 오버레이를
+  // 다시 켜지 않도록 잠가둔다. 이전 버전은 dragover가 매번 hidden=false로 켜는 구조라,
+  // drop 처리 후에도 브라우저가 dragover/dragleave를 한 번 더 발생시키는 경우
+  // (파일 매니저 창의 위치, 브라우저 구현 차이 등) 오버레이가 다시 켜진 채로 안 꺼지는 문제가 있었다.
+  let dropLocked = false;
+
+  function showDropOverlay() {
+    if (dropLocked) return;
+    dropOverlay.hidden = false;
+  }
+
+  function hideDropOverlay() {
+    dropOverlay.hidden = true;
+  }
+
+  // 안전장치: 혹시라도 오버레이가 안 사라지는 상황이 생기면 클릭이나 Esc로 강제로 닫을 수 있게.
+  dropOverlay.addEventListener('click', hideDropOverlay);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideDropOverlay();
+  });
+
+  document.addEventListener('dragover', (e) => {
+    if (!hasFiles(e) || !dropEnabled()) return;
+    e.preventDefault();
+    showDropOverlay();
+  });
+
+  document.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e)) return;
+    // 브라우저 창 자체를 벗어난 경우에만 숨김 (relatedTarget이 null이거나 문서 밖)
+    if (!e.relatedTarget || (e.relatedTarget as Node).nodeName === undefined) {
+      hideDropOverlay();
+    }
+  });
+
+  document.addEventListener('dragend', () => {
+    hideDropOverlay();
+  });
+
+  document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    // 잠깐(0.5초) 오버레이 재표시를 막아 뒤늦은 dragover 이벤트로 다시 켜지는 걸 방지.
+    dropLocked = true;
+    hideDropOverlay();
+    setTimeout(() => {
+      dropLocked = false;
+    }, 500);
+
+    if (!hasFiles(e)) return;
+
+    if (!dropEnabled()) {
+      setStatus('기존 글을 불러온 상태에서는 드래그앤드롭이 비활성화됩니다. "— 새 글 작성 —"으로 전환한 뒤 다시 시도하세요.', true);
+      return;
+    }
+
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.md')) {
+      setStatus('마크다운(.md) 파일만 드래그앤드롭으로 불러올 수 있습니다.', true);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      const slugHint = file.name.replace(/\.md$/i, '');
+      applyMarkdownContent(text, slugHint);
+      setStatus(`파일 불러옴: ${file.name}`);
+    };
+    reader.onerror = () => {
+      setStatus('파일을 읽지 못했습니다.', true);
+    };
+    reader.readAsText(file);
+  });
 
   function buildMarkdown(): string {
     const category = categorySelect.value;
@@ -591,13 +1122,14 @@ import '../../../styles/global.css';
     lines.push(`draft: ${fields.draft.checked}`);
     lines.push(`category: ${category}`);
     if (category === 'it') {
-      const tech = fields.tech.value
+      const tech = getTechValue()
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean);
       lines.push(`tech: [${tech.join(', ')}]`);
     } else {
-      lines.push(`subcategory: ${fields.subcategory.value}`);
+      // 소분류 UI는 제거됨(추후 태그 방식으로 통합 예정) - 프론트매터 스키마 호환을 위해 고정값만 채움.
+      lines.push(`subcategory: review`);
     }
     if (fields.heroImage.value.trim()) {
       lines.push(`heroImage: "${fields.heroImage.value.trim()}"`);
@@ -657,6 +1189,8 @@ import '../../../styles/global.css';
 
   boldBtn.addEventListener('click', () => wrapSelection('**', '**', '굵은 텍스트'));
   italicBtn.addEventListener('click', () => wrapSelection('*', '*', '기울임 텍스트'));
+  underlineBtn.addEventListener('click', () => wrapSelection('<u>', '</u>', '밑줄 텍스트'));
+  strikeBtn.addEventListener('click', () => wrapSelection('~~', '~~', '취소선 텍스트'));
   linkBtn.addEventListener('click', () => {
     const start = bodyEl.selectionStart;
     const end = bodyEl.selectionEnd;
@@ -668,6 +1202,29 @@ import '../../../styles/global.css';
     }
   });
   imageBtn.addEventListener('click', () => insertAtCursor('![설명](/images/파일명.jpg)'));
+
+  // ---------- 서식 단축키 (textarea에 포커스된 상태에서만 동작) ----------
+  // Ctrl+B 굵게 / Ctrl+I 기울임 / Ctrl+U 밑줄 / Ctrl+Shift+S 취소선
+  // 브라우저 기본 동작(예: Ctrl+B 즐겨찾기바, Ctrl+U 소스보기)을 막기 위해 preventDefault 필수.
+  // macOS 사용자를 위해 metaKey(⌘)도 함께 허용.
+  bodyEl.addEventListener('keydown', (e) => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    const key = e.key.toLowerCase();
+    if (key === 'b') {
+      e.preventDefault();
+      wrapSelection('**', '**', '굵은 텍스트');
+    } else if (key === 'i') {
+      e.preventDefault();
+      wrapSelection('*', '*', '기울임 텍스트');
+    } else if (key === 'u') {
+      e.preventDefault();
+      wrapSelection('<u>', '</u>', '밑줄 텍스트');
+    } else if (key === 's' && e.shiftKey) {
+      e.preventDefault();
+      wrapSelection('~~', '~~', '취소선 텍스트');
+    }
+  });
 
   // ---------- 이미지 파일명 삽입 도우미 ----------
   // 실제 이미지 파일 업로드 기능은 없다 (private content repo에 쓰기 권한이 없으므로).
@@ -682,15 +1239,17 @@ import '../../../styles/global.css';
     const alt = imgAltInput.value.trim() || filename;
     const path = filename.startsWith('/') ? filename : `/images/${filename}`;
     insertAtCursor(`![${alt}](${path})`);
-    setStatus(`이미지 태그 삽입됨: ${path} (파일은 미리 content 저장소 public/images/ 에 넣어두세요)`);
+    setStatus(`이미지 태그 삽입됨: ${path}`);
     imgAltInput.value = '';
     imgFilenameInput.value = '';
+    imgSelect.value = '';
   });
 
-  // ---------- 미리보기 토글 ----------
-  // 실시간 렌더링 대신 버튼 토글 방식을 택했다: 긴 글에서는 입력할 때마다 마크다운을
-  // 다시 파싱/렌더링하는 비용이 누적되므로, 필요할 때만 눌러서 확인하는 쪽이 가볍다.
-  let previewOn = false;
+  // ---------- 미리보기 (기본 표시, 데스크탑에서는 본문 옆에 항상 실시간으로 보여줌) ----------
+  // 데스크탑 위주로 쓰기 때문에 오른쪽에 상시 표시하는 쪽이 더 편하다고 판단해 기본값을 켬으로 바꿈.
+  // 화면이 좁아지면(CSS 미디어쿼리) 어차피 세로로 쌓이므로, 필요하면 토글 버튼으로 숨겨서
+  // textarea 공간을 넓게 쓸 수 있게 남겨둔다.
+  let previewOn = true;
 
   function renderPreview() {
     try {
@@ -700,18 +1259,15 @@ import '../../../styles/global.css';
     }
   }
 
+  function applyPreviewState() {
+    bodySplitEl.classList.toggle('preview-off', !previewOn);
+    previewToggleBtn.textContent = previewOn ? '미리보기 숨기기' : '미리보기 보이기';
+    if (previewOn) renderPreview();
+  }
+
   previewToggleBtn.addEventListener('click', () => {
     previewOn = !previewOn;
-    previewToggleBtn.classList.toggle('active', previewOn);
-    previewToggleBtn.textContent = previewOn ? '편집으로 돌아가기' : '미리보기';
-    if (previewOn) {
-      renderPreview();
-      bodyEl.hidden = true;
-      previewEl.hidden = false;
-    } else {
-      bodyEl.hidden = false;
-      previewEl.hidden = true;
-    }
+    applyPreviewState();
   });
 
   // ---------- 자동저장 (localStorage) ----------
@@ -732,8 +1288,7 @@ import '../../../styles/global.css';
         translationKey: fields.translationKey.value,
         slug: fields.slug.value,
         publishedAt: fields.publishedAt.value,
-        tech: fields.tech.value,
-        subcategory: fields.subcategory.value,
+        tech: getTechValue(),
         heroImage: fields.heroImage.value,
         draft: fields.draft.checked,
       },
@@ -787,11 +1342,12 @@ import '../../../styles/global.css';
       fields.translationKey.value = f.translationKey ?? '';
       fields.slug.value = f.slug ?? '';
       fields.publishedAt.value = f.publishedAt ?? new Date().toISOString().slice(0, 10);
-      fields.tech.value = f.tech ?? '';
-      fields.subcategory.value = f.subcategory ?? 'review';
+      setTechValue(f.tech ?? '');
       fields.heroImage.value = f.heroImage ?? '';
+      heroImageSelect.value = '';
       fields.draft.checked = !!f.draft;
       bodyEl.value = draft.body ?? '';
+      if (previewOn) renderPreview();
       setStatus('임시저장된 초안을 불러왔습니다.');
     } catch {
       // 손상된 초안 데이터 - 무시
@@ -799,6 +1355,8 @@ import '../../../styles/global.css';
   }
 
   // 입력 시마다 디바운스 자동저장 (폼 필드 + 본문 전체)
+  // 참고: 기술 태그 체크박스들은 renderTechCheckboxList에서 개별적으로 리스너를 붙인다
+  // (목록이 나중에 동적으로 채워지므로 여기서 한 번에 잡을 수 없음).
   [
     fields.title,
     fields.description,
@@ -806,8 +1364,6 @@ import '../../../styles/global.css';
     fields.translationKey,
     fields.slug,
     fields.publishedAt,
-    fields.tech,
-    fields.subcategory,
     fields.heroImage,
     fields.draft,
   ].forEach((el) => {
@@ -832,6 +1388,10 @@ import '../../../styles/global.css';
 
   updateCategoryFields();
   resetForm();
+  applyPreviewState();
   loadList();
-  restoreDraftIfAny();
+  loadImageList();
+  // 태그 체크박스 목록이 채워진 뒤에 초안을 복원해야, 초안에 담긴 태그들이 체크박스로
+  // 정확히 매칭된다 (먼저 복원하면 목록이 비어있어 전부 "직접입력"으로 밀려버림).
+  loadTagList().then(restoreDraftIfAny);
 </script>

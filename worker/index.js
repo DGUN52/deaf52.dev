@@ -259,6 +259,91 @@ export default {
       return json({ category, items });
     }
 
+    // ---------- 관리자: 이미지 목록 (content 저장소 public/images/) ----------
+    // 에디터에서 heroImage/본문 이미지 삽입 시 파일명을 직접 타이핑하지 않고
+    // 이미 업로드된 파일 중에서 고를 수 있도록, GitHub API로 디렉토리 목록만 읽어온다.
+    if (url.pathname === '/api/editor/images' && request.method === 'GET') {
+      if (!env.GITHUB_READ_TOKEN) {
+        return json({ error: 'GITHUB_READ_TOKEN이 설정되지 않았습니다.' }, 500);
+      }
+      const REPO = 'DGUN52/deaf52.dev-content';
+      const res = await fetch(`https://api.github.com/repos/${REPO}/contents/public/images`, {
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
+          'User-Agent': 'deaf52-admin-editor',
+          Accept: 'application/vnd.github+json',
+        },
+      });
+      if (!res.ok) {
+        return json({ error: `GitHub API 오류 (${res.status})` }, res.status === 404 ? 404 : 502);
+      }
+      const files = await res.json();
+      const items = (Array.isArray(files) ? files : [])
+        .filter((f) => f.type === 'file' && /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name))
+        .map((f) => f.name)
+        .sort();
+      return json({ items });
+    }
+
+    // ---------- 관리자: 기술 태그(tech) 목록 ----------
+    // 매번 IT 글 전체를 GitHub에서 훑는 건 무거우므로, KV에 캐시해두고 그걸 읽기만 한다.
+    // 캐시는 실시간 자동 갱신이 아니라 관리자가 에디터에서 "태그 목록 갱신" 버튼을 눌렀을 때만
+    // /api/editor/tags/refresh 가 GitHub 전체를 스캔해서 KV(키: "editor:tags")를 다시 채운다.
+    if (url.pathname === '/api/editor/tags' && request.method === 'GET') {
+      const raw = await env.COUNTERS.get('editor:tags');
+      return json({ items: raw ? JSON.parse(raw) : [] });
+    }
+
+    if (url.pathname === '/api/editor/tags/refresh' && request.method === 'POST') {
+      if (!env.GITHUB_READ_TOKEN) {
+        return json({ error: 'GITHUB_READ_TOKEN이 설정되지 않았습니다.' }, 500);
+      }
+      const REPO = 'DGUN52/deaf52.dev-content';
+      const listRes = await fetch(`https://api.github.com/repos/${REPO}/contents/it/ko`, {
+        headers: {
+          Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
+          'User-Agent': 'deaf52-admin-editor',
+          Accept: 'application/vnd.github+json',
+        },
+      });
+      if (!listRes.ok) {
+        return json({ error: `GitHub API 오류 (${listRes.status})` }, listRes.status === 404 ? 404 : 502);
+      }
+      const files = await listRes.json();
+      const mdFiles = (Array.isArray(files) ? files : []).filter(
+        (f) => f.type === 'file' && f.name.endsWith('.md')
+      );
+
+      const tagSet = new Set();
+      // GitHub REST API rate limit(토큰당 시간당 5000회) 안에서 순차 처리 - 글 개수가
+      // 수백 개 단위로 늘어나기 전까지는 병렬화 없이도 충분히 빠르다.
+      for (const f of mdFiles) {
+        const fileRes = await fetch(
+          `https://api.github.com/repos/${REPO}/contents/it/ko/${f.name}`,
+          {
+            headers: {
+              Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
+              'User-Agent': 'deaf52-admin-editor',
+              Accept: 'application/vnd.github.raw+json',
+            },
+          }
+        );
+        if (!fileRes.ok) continue;
+        const content = await fileRes.text();
+        const match = content.match(/^tech:\s*\[(.*)\]\s*$/m);
+        if (!match) continue;
+        match[1]
+          .split(',')
+          .map((t) => t.trim().replace(/^["']|["']$/g, ''))
+          .filter(Boolean)
+          .forEach((t) => tagSet.add(t));
+      }
+
+      const items = [...tagSet].sort((a, b) => a.localeCompare(b));
+      await env.COUNTERS.put('editor:tags', JSON.stringify(items));
+      return json({ items });
+    }
+
     // ---------- 인기글 랭킹 (신규) ----------
     if (url.pathname === '/api/ranking' && request.method === 'GET') {
       const metric = url.searchParams.get('metric') === 'likes' ? 'like' : 'post';
