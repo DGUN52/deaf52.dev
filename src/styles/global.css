@@ -1560,6 +1560,36 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   }
 }
 
+/* 목차(TOC) 사이드바까지 있는 3단 레이아웃(has-toc)은 컬럼이 하나 더 있어서
+   900px보다 훨씬 넓은 화면에서도 본문이 눌려 좁아 보일 수 있다 - 220px(인기글) +
+   200px(목차) + 좌우 gap 3rem*2를 빼면 본문에 760px을 온전히 주기 위한 최소 폭이
+   900px보다 훨씬 크기 때문. has-toc 컨테이너만 별도로 더 넓은 기준에서 먼저
+   모바일(스택) 레이아웃으로 전환한다. */
+@media (max-width: 1280px) {
+  .page-with-sidebar.has-toc {
+    flex-direction: column;
+  }
+
+  .page-with-sidebar.has-toc .popular-sidebar {
+    width: 100%;
+    position: static;
+    order: 1;
+  }
+
+  .page-with-sidebar.has-toc .page-shell-with-sidebar {
+    order: 0;
+    max-width: none;
+  }
+
+  .page-with-sidebar.has-toc .toc-sidebar {
+    display: none;
+  }
+
+  .page-with-sidebar.has-toc .toc-inline {
+    display: block;
+  }
+}
+
 /* ---------- Translation report floating button (desktop only, fixed to viewport) ---------- */
 .report-trigger-floating {
   display: none; /* 기본은 숨김, 데스크탑 미디어쿼리에서만 보이게 함 */

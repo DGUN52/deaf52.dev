@@ -139,7 +139,7 @@ const subcategoryLabel: Record<string, string> = {
   // ---------- 목차(TOC) 스크롤 하이라이트 ----------
   // 사이드바(데스크탑)와 인라인 접이식(모바일) 두 군데에 목차 링크가 각각 렌더링되어 있으므로
   // data-toc-link 속성으로 둘 다 한 번에 선택해서 같이 갱신한다.
-  const tocHeadings = Array.from(document.querySelectorAll('.post-body h2[id]'));
+  const tocHeadings = Array.from(document.querySelectorAll('.post-body h1[id], .post-body h2[id]'));
   const tocLinks = Array.from(document.querySelectorAll('[data-toc-link]'));
   if (tocHeadings.length > 0 && tocLinks.length > 0) {
     const setActiveToc = (id) => {
