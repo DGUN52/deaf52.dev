@@ -17,6 +17,23 @@ const t = lang === 'ko'
   ? { title: 'IT기술', sub: '기술별 기록', empty: '아직 작성된 글이 없습니다.', latest: '최신순 보기', grouped: '기술별 보기' }
   : { title: 'Tech', sub: 'notes by technology', empty: 'No posts yet.', latest: 'Latest', grouped: 'By Technology' };
 
+// 카테고리 목록 페이지 자체를 대표하는 SEO용 title/description (9개 언어).
+// 위 t.title/t.sub는 화면에 보이는 섹션 제목이고, 이건 <title>/<meta description> 전용 -
+// BaseLayout에 description을 안 넘기면 사이트 공통 기본 문구로 폴백되어 모든 언어의
+// 목록 페이지가 똑같은 description을 갖게 되는 문제가 있었다 (Search Console에서 발견).
+const seoText: Record<string, { title: string; description: string }> = {
+  ko: { title: 'IT기술 · deaf52', description: 'deaf52의 IT 기술 글 모음. Docker, MongoDB, 알고리즘 등 기술별로 정리된 개발 기록.' },
+  en: { title: 'Tech · deaf52', description: "deaf52's IT & tech articles, organized by technology - Docker, MongoDB, algorithms, and more." },
+  ja: { title: 'IT技術 · deaf52', description: 'deaf52のIT技術記事一覧。Docker、MongoDB、アルゴリズムなど技術別に整理された開発記録。' },
+  zh: { title: 'IT技术 · deaf52', description: 'deaf52的IT技术文章合集，按技术分类整理，涵盖Docker、MongoDB、算法等开发笔记。' },
+  in: { title: 'टेक · deaf52', description: 'deaf52 के IT और तकनीक लेख, तकनीक के अनुसार व्यवस्थित - Docker, MongoDB, एल्गोरिदम और अधिक।' },
+  de: { title: 'Tech · deaf52', description: 'IT-Artikel von deaf52, sortiert nach Technologie - Docker, MongoDB, Algorithmen und mehr.' },
+  uk: { title: 'Tech · deaf52', description: "deaf52's IT & tech articles, organised by technology - Docker, MongoDB, algorithms, and more." },
+  il: { title: 'טכנולוגיה · deaf52', description: 'מאמרי IT וטכנולוגיה של deaf52, מאורגנים לפי טכנולוגיה - Docker, MongoDB, אלגוריתמים ועוד.' },
+  tw: { title: 'IT技術 · deaf52', description: 'deaf52的IT技術文章合集，依技術分類整理，涵蓋Docker、MongoDB、演算法等開發筆記。' },
+};
+const seo = seoText[lang] ?? seoText.en;
+
 // Group posts by tech tags
 const groupedPosts = new Map<string, typeof posts>();
 posts.forEach(p => {
@@ -27,7 +44,7 @@ posts.forEach(p => {
 });
 ---
 
-<BaseLayout title={t.title}>
+<BaseLayout title={seo.title} description={seo.description}>
   <div class="section-heading it">
     <span class="marker">01</span>
     <h2>{t.title}</h2>

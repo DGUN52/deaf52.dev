@@ -21,6 +21,23 @@ const t = lang === 'ko'
   ? { it: 'IT기술', itSub: '기술별 기록', humanities: '인문학', humanitiesSub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.', popular: '인기 글', popularViews: '조회수 TOP' }
   : { it: 'Tech', itSub: 'notes by technology', humanities: 'Humanities', humanitiesSub: 'reviews, reflections, writing', empty: 'No posts yet.', popular: 'Popular', popularViews: 'Most viewed' };
 
+// 홈페이지 자체를 대표하는 SEO용 title/description (9개 언어).
+// 예전엔 title이 언어와 무관하게 항상 "deaf52" 고정값이었고 description도 전달 안 해서
+// BaseLayout의 사이트 공통 기본 문구로 폴백됐다 - 9개 언어 홈이 전부 동일한 title/description을
+// 갖게 되는 문제가 있었다 (Search Console에서 발견).
+const seoText: Record<string, { title: string; description: string }> = {
+  ko: { title: 'deaf52', description: 'deaf52 · IT 기술과 인문학을 함께 기록하는 개인 블로그.' },
+  en: { title: 'deaf52', description: 'deaf52 · A personal blog on IT & technology, and the humanities.' },
+  ja: { title: 'deaf52', description: 'deaf52 · IT技術と人文学を綴る個人ブログ。' },
+  zh: { title: 'deaf52', description: 'deaf52 · 记录IT技术与人文学的个人博客。' },
+  in: { title: 'deaf52', description: 'deaf52 · IT और मानविकी पर एक व्यक्तिगत ब्लॉग।' },
+  de: { title: 'deaf52', description: 'deaf52 · Ein persönlicher Blog über IT & Technologie sowie Geisteswissenschaften.' },
+  uk: { title: 'deaf52', description: 'deaf52 · A personal blog on IT & technology, and the humanities.' },
+  il: { title: 'deaf52', description: 'deaf52 · בלוג אישי על IT וטכנולוגיה, וכן מדעי הרוח.' },
+  tw: { title: 'deaf52', description: 'deaf52 · 記錄IT技術與人文學的個人部落格。' },
+};
+const seo = seoText[lang] ?? seoText.en;
+
 const subcategoryLabel: Record<string, string> = {
   review: lang === 'ko' ? '리뷰' : 'review',
   reflection: lang === 'ko' ? '사색' : 'reflection',
@@ -39,7 +56,7 @@ for (const p of humanitiesPosts) {
 }
 ---
 
-<BaseLayout title={lang === 'ko' ? 'deaf52' : 'deaf52'}>
+<BaseLayout title={seo.title} description={seo.description}>
   <section class="popular-section">
     <div class="section-heading popular">
       <span class="marker">★</span>

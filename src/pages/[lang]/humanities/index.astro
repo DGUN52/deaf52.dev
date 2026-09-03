@@ -25,6 +25,23 @@ const t = lang === 'ko'
   ? { title: '인문학', sub: '리뷰・사색・글쓰기', empty: '아직 작성된 글이 없습니다.', latest: '최신순 보기', grouped: '소분류별 보기' }
   : { title: 'Humanities', sub: 'reviews, reflections, writing', empty: 'No posts yet.', latest: 'Latest', grouped: 'By Category' };
 
+// 카테고리 목록 페이지 자체를 대표하는 SEO용 title/description (9개 언어).
+// 위 t.title/t.sub는 화면에 보이는 섹션 제목이고, 이건 <title>/<meta description> 전용 -
+// BaseLayout에 description을 안 넘기면 사이트 공통 기본 문구로 폴백되어 모든 언어의
+// 목록 페이지가 똑같은 description을 갖게 되는 문제가 있었다 (Search Console에서 발견).
+const seoText: Record<string, { title: string; description: string }> = {
+  ko: { title: '인문학 · deaf52', description: 'deaf52의 인문학 글 모음. 리뷰, 사색, 픽션, 논픽션 등 다양한 글쓰기.' },
+  en: { title: 'Humanities · deaf52', description: "deaf52's humanities writing - reviews, reflections, fiction, and nonfiction." },
+  ja: { title: '人文学 · deaf52', description: 'deaf52の人文学記事一覧。レビュー、随想、フィクション、ノンフィクションなど。' },
+  zh: { title: '人文学 · deaf52', description: 'deaf52的人文学文章合集，包括书评、随笔、小说与非虚构写作。' },
+  in: { title: 'मानविकी · deaf52', description: 'deaf52 के मानविकी लेख - समीक्षाएं, चिंतन, कथा और गैर-कथा लेखन।' },
+  de: { title: 'Geisteswissenschaften · deaf52', description: 'Essays von deaf52 zu Geisteswissenschaften - Rezensionen, Reflexionen, Fiktion und Sachtexte.' },
+  uk: { title: 'Humanities · deaf52', description: "deaf52's humanities writing - reviews, reflections, fiction, and nonfiction." },
+  il: { title: 'מדעי הרוח · deaf52', description: 'כתיבה במדעי הרוח מאת deaf52 - ביקורות, הגות, בדיה ופרוזה עיונית.' },
+  tw: { title: '人文學 · deaf52', description: 'deaf52的人文學文章合集，包括書評、隨筆、小說與非虛構寫作。' },
+};
+const seo = seoText[lang] ?? seoText.en;
+
 // Group posts by subcategory
 const groupedPosts = new Map<string, typeof posts>();
 posts.forEach(p => {
@@ -34,7 +51,7 @@ posts.forEach(p => {
 });
 ---
 
-<BaseLayout title={t.title}>
+<BaseLayout title={seo.title} description={seo.description}>
   <div class="section-heading humanities">
     <span class="marker">02</span>
     <h2>{t.title}</h2>
