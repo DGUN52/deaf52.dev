@@ -38,6 +38,7 @@ import '../../../styles/global.css';
         <option value="">— 새 글 작성 —</option>
       </select>
       <button type="button" id="ed-load-list" title="목록 새로고침">⟳</button>
+      <button type="button" id="ed-connect-images" title="로컬 public/images 폴더를 연결하면, 본문/드래그드롭한 글에 쓰인 이미지 파일명을 그 폴더에서 자동으로 찾아 미리보기에 보여줍니다 (배포 사이트에 아직 없는 새 이미지도 미리 확인 가능)">🖼 이미지 폴더 연결</button>
       <span class="editor-toolbar-hint">"새 글 작성" 상태에서 .md 파일을 드래그하면 불러옵니다</span>
       <span id="ed-status" class="editor-status"></span>
     </div>
@@ -222,6 +223,16 @@ import '../../../styles/global.css';
   .editor-toolbar button:hover {
     border-color: var(--tech);
     color: var(--tech);
+  }
+
+  .editor-toolbar button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .editor-toolbar button:disabled:hover {
+    border-color: var(--line);
+    color: inherit;
   }
 
   .editor-toolbar-hint {
@@ -890,6 +901,10 @@ import '../../../styles/global.css';
     if (file) {
       imgFilenameInput.value = file.name;
       imgSelect.value = '';
+      // 이 파일명으로 미리보기에 blob URL을 등록해둔다 - 배포 사이트엔 아직 없는 새 이미지라도
+      // 이 브라우저 안에서는 본문에 삽입했을 때 바로 미리보기에 나타나게 하기 위함.
+      registerLocalImagePreview(file);
+      if (previewOn) renderPreview();
       scheduleAutosave();
     }
     imgFilePicker.value = '';
@@ -901,6 +916,7 @@ import '../../../styles/global.css';
     if (file) {
       fields.heroImage.value = `/images/${file.name}`;
       heroImageSelect.value = '';
+      registerLocalImagePreview(file);
       scheduleAutosave();
     }
     heroFilePicker.value = '';
@@ -1245,15 +1261,100 @@ import '../../../styles/global.css';
     imgSelect.value = '';
   });
 
+  // ---------- 로컬 이미지 미리보기 (배포된 사이트/public/images/엔 아직 없는 새 이미지도
+  // 에디터 미리보기에서만큼은 보이게 하기 위한 기능) ----------
+  // 실제 업로드는 여전히 하지 않는다 - 선택한 이미지 파일을 브라우저 메모리 안에서만
+  // Blob URL로 바꿔서 <img>의 src를 그 순간만 가리키게 할 뿐, 다운로드되는 .md 파일에는
+  // 항상 원래의 /images/파일명.ext 경로가 그대로 저장된다 (배포 후 실제 경로와 일치해야 하므로).
+  // 파일명(예: photo1.jpg) 기준으로 매칭하기 때문에, heroImage든 본문 삽입 이미지든
+  // 같은 파일명을 쓰면 같은 로컬 미리보기가 적용된다.
+  const localImagePreviews = new Map<string, string>(); // 파일명 -> blob: URL
+
+  function registerLocalImagePreview(file: File) {
+    // 같은 파일명으로 이전에 등록해둔 blob URL이 있다면 메모리 누수 방지를 위해 해제하고 교체.
+    const prev = localImagePreviews.get(file.name);
+    if (prev) URL.revokeObjectURL(prev);
+    localImagePreviews.set(file.name, URL.createObjectURL(file));
+  }
+
+  // ---------- public/images 폴더 연결 (File System Access API) ----------
+  // 파일 선택창으로 이미지를 하나하나 고르지 않아도, public/images 폴더 자체를 한 번
+  // 연결해두면 본문에 등장하는 이미지 파일명을 그 폴더에서 자동으로 찾아 미리보기에 걸어준다.
+  // 특히 .md 드래그앤드롭으로 기존 작성 중이던 글을 불러올 때 유용함 - 파일 자체는
+  // 안 딸려오지만, 본문에 이미 적힌 파일명들로 로컬 폴더를 뒤져서 채워줄 수 있음.
+  // Chrome/Edge 등 File System Access API 지원 브라우저에서만 동작하며, 지원 안 하면
+  // 버튼이 조용히 비활성화된다. 폴더 접근 권한은 이 탭에서만 유효하고 서버로는 전혀 전송되지 않는다.
+  // File System Access API 타입은 TS lib에 아직 표준으로 포함되지 않은 경우가 있어 any로 느슨하게 처리.
+  let imagesDirHandle: any = null;
+  const connectImagesBtn = document.getElementById('ed-connect-images')!;
+
+  if (!('showDirectoryPicker' in window)) {
+    connectImagesBtn.setAttribute('disabled', 'true');
+    connectImagesBtn.title = '이 브라우저는 폴더 연결 기능을 지원하지 않습니다 (Chrome/Edge 등에서 사용 가능)';
+  }
+
+  connectImagesBtn.addEventListener('click', async () => {
+    try {
+      imagesDirHandle = await (window as any).showDirectoryPicker({ id: 'deaf52-editor-images', mode: 'read' });
+      connectImagesBtn.textContent = `🖼 연결됨: ${imagesDirHandle!.name}`;
+      setStatus(`이미지 폴더 연결됨: ${imagesDirHandle!.name}`);
+      if (previewOn) renderPreview();
+    } catch {
+      // 사용자가 폴더 선택을 취소한 경우 등 - 조용히 무시
+    }
+  });
+
+  // 폴더에서 파일명으로 이미지를 찾아 blob URL로 등록한다 (한 번 찾은 파일은 localImagePreviews에
+  // 캐시되어 재탐색하지 않는다). 못 찾으면 false를 반환.
+  async function tryResolveFromImagesDir(filename: string): Promise<boolean> {
+    if (!imagesDirHandle || localImagePreviews.has(filename)) return localImagePreviews.has(filename);
+    try {
+      const fileHandle = await imagesDirHandle.getFileHandle(filename);
+      const file = await fileHandle.getFile();
+      registerLocalImagePreview(file);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // ---------- 미리보기 (기본 표시, 데스크탑에서는 본문 옆에 항상 실시간으로 보여줌) ----------
   // 데스크탑 위주로 쓰기 때문에 오른쪽에 상시 표시하는 쪽이 더 편하다고 판단해 기본값을 켬으로 바꿈.
   // 화면이 좁아지면(CSS 미디어쿼리) 어차피 세로로 쌓이므로, 필요하면 토글 버튼으로 숨겨서
   // textarea 공간을 넓게 쓸 수 있게 남겨둔다.
   let previewOn = true;
+  let previewRenderSeq = 0; // 연속 입력 중 비동기 렌더링이 뒤섞여 오래된 결과로 덮어쓰는 것을 방지
 
   function renderPreview() {
+    const seq = ++previewRenderSeq;
     try {
       previewEl.innerHTML = marked.parse(bodyEl.value || '_(본문 없음)_');
+      const imgs = Array.from(previewEl.querySelectorAll('img'));
+      if (imgs.length === 0) return;
+
+      const applyKnown = () => {
+        imgs.forEach((img) => {
+          const src = img.getAttribute('src') ?? '';
+          const filename = src.split('/').pop() ?? '';
+          const blobUrl = localImagePreviews.get(filename);
+          if (blobUrl) img.src = blobUrl;
+        });
+      };
+      applyKnown();
+
+      // 폴더가 연결되어 있으면, 아직 캐시에 없는 이미지들은 폴더에서 찾아본 뒤 다시 적용.
+      if (imagesDirHandle) {
+        const missing = imgs
+          .map((img) => (img.getAttribute('src') ?? '').split('/').pop() ?? '')
+          .filter((name) => name && !localImagePreviews.has(name));
+        if (missing.length > 0) {
+          Promise.all(missing.map((name) => tryResolveFromImagesDir(name))).then((results) => {
+            // 이 렌더링 이후 본문이 또 바뀌어 새 렌더링이 시작됐다면 낡은 결과이므로 버림.
+            if (seq !== previewRenderSeq) return;
+            if (results.some(Boolean)) applyKnown();
+          });
+        }
+      }
     } catch {
       previewEl.textContent = '미리보기 렌더링 실패';
     }
