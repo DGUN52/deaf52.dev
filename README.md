@@ -58,6 +58,13 @@ npm run dev
 - **좋아요**: 글마다 좋아요 버튼. 클라이언트가 `localStorage`로 "내가 눌렀는지"를 기억하고, 그 상태에 따라 서버 카운트를 +1/-1 요청하는 단순한 방식(로그인 시스템 없음, 새로고침 연타 어뷰징은 클라이언트 신뢰에 의존).
 - **인기글 사이드바**: 조회수 기준 상위 글을 글 상세 페이지에 노출(`PopularSidebar.astro`, `/api/ranking`).
 - **번역 신고**: 독자가 번역 품질 문제를 신고할 수 있는 위젯(`TranslationReport.astro`). 신고 내용은 KV에 저장되고, `/ko/admin/reports` 관리자 페이지에서 조회·처리완료 처리 가능(Cloudflare Access로 접근 보호 필요, 아래 참고).
+- **글 에디터**: `/ko/admin/editor` — 마크다운 글 작성/수정용 관리자 전용 페이지(`src/pages/ko/admin/editor.astro`, Cloudflare Access 보호 전제). GitHub API로 content 레포의 기존 글을 읽어와 폼에 채우고, 완성된 글은 frontmatter+본문을 합쳐 `.md` 파일로 다운로드하는 방식(직접 커밋 권한은 없음 — 다운로드 후 수동으로 content 레포에 넣고 git commit/push). 주요 기능:
+  - 본문 서식 툴바(굵게/기울임/밑줄/취소선/링크/이미지) + 단축키(Ctrl+B/I/U, Ctrl+Shift+S)
+  - 우측에 실시간 마크다운 미리보기(사이트 실제 글 페이지와 동일한 타이포그래피 적용)
+  - 기존 작성 중이던 `.md` 파일을 에디터에 드래그앤드롭하면 폼 전체 자동 채움("새 글 작성" 상태일 때만 동작)
+  - 이미지 미리보기: 파일 선택창으로 로컬 이미지를 고르면 그 파일이 브라우저 메모리에서 임시 미리보기로 뜨고, `public/images` 폴더 자체를 연결(File System Access API, Chrome/Edge)해두면 본문에 쓰인 이미지 파일명을 폴더에서 자동으로 찾아 보여줌 — 배포 사이트에 아직 없는 새 이미지도 로컬에서 미리 확인 가능. 실제 업로드는 없음(순수 미리보기용)
+  - 기술 태그 체크박스 목록(IT 카테고리, 기존 글들에서 자동 수집·캐싱), heroImage/본문 이미지 select 드롭다운(`public/images/` 목록 fetch)
+  - 입력 내용은 `localStorage`에 디바운스 자동저장(임시 초안), 브라우저 새로고침해도 복구 가능
 - **RSS**: 언어별 피드(`/{lang}/rss.xml`).
 - **쿠키 동의 배너(CMP)**: `CookieConsentBanner.astro`. Cloudflare Worker가 `request.cf.country`로 방문자 국가를 감지해 `<head>`에 주입하고, EEA·영국·스위스 방문자에게는 기본값을 "거부"로, 그 외 지역은 "허용"으로 설정하는 Google Consent Mode를 구현. 현재는 `analytics_storage`만 배너에서 실제로 갱신되며, 광고 관련 동의(`ad_storage` 등)는 광고 도입 시점에 확장 예정.
 - **GA4 / GTM**: Google Tag Manager(`GTM-TFW86BDB`) 경유로 GA4(`G-7YH0P1N5VR`) 연동. Ko-fi 클릭, 글 좋아요, 번역 신고 제출에 커스텀 이벤트(dataLayer push) 연결.
@@ -77,8 +84,13 @@ Cloudflare KV(`COUNTERS` 네임스페이스)를 이용해 방문자 수, 글별 
 - `GET  /api/ranking?metric=views|likes&limit=5` — 조회수/좋아요 상위 글 목록
 - `GET  /api/admin/reports` — 번역 신고 전체 목록(최신순)
 - `PATCH /api/admin/reports?key=xxx` — 신고 처리 상태 토글(body: `{ status: 'open' | 'resolved' }`)
+- `GET  /api/editor/posts?category=xxx` — 해당 카테고리(ko 기준) 기존 글 slug 목록
+- `GET  /api/editor/posts?category=xxx&slug=yyy` — 해당 글의 원본 마크다운(frontmatter 포함) 조회 — GitHub API로 content 레포에서 읽기 전용으로 가져옴
+- `GET  /api/editor/images` — `public/images/` 폴더 목록(에디터의 이미지 select 채우기용)
+- `GET  /api/editor/tags` — KV에 캐시된 기술 태그 목록
+- `POST /api/editor/tags/refresh` — 기존 IT 글 전체를 훑어 기술 태그 목록을 새로 만들어 KV에 캐싱
 
-`/api/admin/*`는 애플리케이션 자체에 인증 로직이 없습니다. `/ko/admin/*` 경로를 Cloudflare Access(Zero Trust)로 이메일 인증 보호하는 것을 전제로 하며, 아직 이 Cloudflare 대시보드 설정이 안 되어 있다면 관리자 페이지 URL을 아는 누구나 접근할 수 있는 상태이니 주의.
+`/api/admin/*`, `/api/editor/*`는 애플리케이션 자체에 인증 로직이 없습니다. `/ko/admin/*` 경로를 Cloudflare Access(Zero Trust)로 이메일 인증 보호하는 것을 전제로 하며, 아직 이 Cloudflare 대시보드 설정이 안 되어 있다면 관리자 페이지 URL을 아는 누구나 접근할 수 있는 상태이니 주의.
 
 ## 콘텐츠 작업 도구
 
@@ -90,6 +102,7 @@ Cloudflare KV(`COUNTERS` 네임스페이스)를 이용해 방문자 수, 글별 
 
 - 인문학 카테고리 콘텐츠 채우기
 - Cloudflare Access로 `/ko/admin/*` 보호 설정
+- 카테고리 목록 페이지(`/{lang}/it/`, `/{lang}/humanities/`)의 `<meta description>`·title이 언어/카테고리 무관하게 고정값으로 나오는 문제 — 언어별로 고유하게 채워지도록 수정 필요
 - 실제 트래픽 확보 후 CMP를 광고 동의(`ad_*`) 신호까지 확장하고 Google AdSense 신청
 - www → non-www 리다이렉트, 국내 후원 수단(카카오페이/토스) 추가, 언어 자동 감지
 - 댓글: [giscus](https://giscus.app) — GitHub Discussions 기반, 무료
