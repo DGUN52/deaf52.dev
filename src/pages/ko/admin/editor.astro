@@ -1242,6 +1242,75 @@ import '../../../styles/global.css';
     }
   });
 
+  // ---------- Tab / Shift+Tab 들여쓰기 (마크다운 리스트 중첩용) ----------
+  // 마크다운 리스트 하위 항목은 공백 4칸 들여쓰기가 정석(탭 문자는 렌더러마다 해석이 달라
+  // 깨질 수 있어 피함). textarea 기본 동작(Tab = 다음 요소로 포커스 이동)을 막고 대신
+  // 커서 위치에 공백 4칸을 넣거나(Tab), 현재 줄 맨 앞의 들여쓰기를 최대 4칸 제거한다(Shift+Tab).
+  // 여러 줄이 선택된 상태면 선택된 모든 줄에 한꺼번에 적용된다(일반 코드 에디터와 동일한 동작).
+  const INDENT = '    '; // 공백 4칸
+
+  bodyEl.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+
+    const start = bodyEl.selectionStart;
+    const end = bodyEl.selectionEnd;
+    const value = bodyEl.value;
+
+    // 선택 영역이 걸쳐있는 줄들의 시작/끝 인덱스를 구한다.
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+    let lineEnd = value.indexOf('\n', end);
+    if (lineEnd === -1) lineEnd = value.length;
+
+    const selectedLines = value.slice(lineStart, lineEnd);
+    const isMultiLine = selectedLines.includes('\n');
+
+    if (!e.shiftKey) {
+      // Tab: 들여쓰기
+      if (!isMultiLine && start === end) {
+        // 선택 없이 커서만 있는 단일 줄 - 커서 위치에 공백 4칸만 삽입.
+        insertAtCursor(INDENT);
+        return;
+      }
+      const indented = selectedLines
+        .split('\n')
+        .map((line) => INDENT + line)
+        .join('\n');
+      bodyEl.value = value.slice(0, lineStart) + indented + value.slice(lineEnd);
+      bodyEl.setSelectionRange(start + INDENT.length, end + INDENT.length * indented.split('\n').length);
+      bodyEl.focus();
+      scheduleAutosave();
+      if (previewOn) renderPreview();
+    } else {
+      // Shift+Tab: 내어쓰기 - 각 줄 맨 앞의 공백을 최대 4칸(또는 탭 1개)만큼 제거.
+      let removedFromFirstLine = 0;
+      let totalRemoved = 0;
+      const outdented = selectedLines
+        .split('\n')
+        .map((line, i) => {
+          let removeCount = 0;
+          if (line.startsWith(INDENT)) removeCount = INDENT.length;
+          else if (line.startsWith('\t')) removeCount = 1;
+          else {
+            // 4칸 미만이면 있는 만큼만(앞부분 공백만) 제거.
+            const leadingSpaces = line.match(/^ */)?.[0].length ?? 0;
+            removeCount = Math.min(leadingSpaces, INDENT.length);
+          }
+          if (i === 0) removedFromFirstLine = removeCount;
+          totalRemoved += removeCount;
+          return line.slice(removeCount);
+        })
+        .join('\n');
+      bodyEl.value = value.slice(0, lineStart) + outdented + value.slice(lineEnd);
+      const newStart = Math.max(lineStart, start - removedFromFirstLine);
+      const newEnd = Math.max(newStart, end - totalRemoved);
+      bodyEl.setSelectionRange(newStart, newEnd);
+      bodyEl.focus();
+      scheduleAutosave();
+      if (previewOn) renderPreview();
+    }
+  });
+
   // ---------- 이미지 파일명 삽입 도우미 ----------
   // 실제 이미지 파일 업로드 기능은 없다 (private content repo에 쓰기 권한이 없으므로).
   // 관리자가 이미지를 미리 content 저장소의 public/images/ 에 직접 넣어둔 뒤,
