@@ -142,15 +142,90 @@ const isDev = import.meta.env.DEV;
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={ogImageAbs} />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <!-- Pretendard: 예전엔 jsDelivr CDN에서 pretendard.css 전체(모든 굵기)를 렌더링 차단
+       방식으로 받아왔는데, PageSpeed Insights 측정 결과 이 요청 체인(CDN 연결 + CSS +
+       실제 woff2 다운로드)이 LCP/FCP를 크게 늦추는 주범이었다(Regular 하나 받는 데만
+       2.4초 이상). 그래서 실제로 쓰는 굵기 4개(400/500/600/700)만 public/fonts/에
+       자체 호스팅하고, 본문 텍스트에 바로 쓰이는 Regular/Medium은 preload로 우선순위를
+       올려서 폰트 파일이 최대한 빨리 받아지기 시작하도록 했다. -->
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/Pretendard-Regular.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/Pretendard-Medium.woff2" crossorigin />
+  <style is:global>
+    @font-face {
+      font-family: "Pretendard";
+      src: url("/fonts/Pretendard-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Pretendard";
+      src: url("/fonts/Pretendard-Medium.woff2") format("woff2");
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Pretendard";
+      src: url("/fonts/Pretendard-SemiBold.woff2") format("woff2");
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Pretendard";
+      src: url("/fonts/Pretendard-Bold.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+  <!-- IBM Plex Mono: 코드블록/기술 용어용 monospace 서체. 라틴 문자만 쓰는 서브셋이라
+       (IBM 공식 배포본 기준 굵기당 50KB 내외) Pretendard처럼 자체 호스팅해도 부담이
+       없어서 여기도 public/fonts/로 옮겼다. -->
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/IBMPlexMono-Regular.woff2" crossorigin />
+  <style is:global>
+    @font-face {
+      font-family: "IBM Plex Mono";
+      src: url("/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "IBM Plex Mono";
+      src: url("/fonts/IBMPlexMono-Medium.woff2") format("woff2");
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+  <!-- Noto Serif KR: 헤딩(#, ##...)용 명조체. 이건 자체 호스팅하지 않는다 - 한글 완성형
+       + 한자를 포함하는 CJK 통 폰트라 한 굵기 원본 파일이 수 MB~10MB대에 달해서,
+       그대로 자체 호스팅하면 지금의 렌더링 차단 문제보다 훨씬 큰 역효과가 난다.
+       Google Fonts는 이런 CJK 폰트를 방문자 브라우저가 실제로 쓰는 유니코드 범위만
+       골라 작은 조각으로 쪼개 서빙해주는데(동적 서브셋팅), 이 이점을 자체 호스팅으로
+       옮기면 그대로 잃는다. 대신 렌더링 차단만 media="print" 트릭으로 풀어둔다 -
+       처음엔 브라우저가 "인쇄용이라 지금 안 씀"으로 취급해 비동기로 받고, onload에서
+       media를 all로 바꿔 실제 적용한다. 폰트 로드 전에도 body는 이미 그려지므로
+       헤딩 폰트가 늦게 와도 전체 페이지 렌더링을 막지 않는다. -->
   <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap"
   />
   <link
-    href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap"
     rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
   />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
   <link
     rel="alternate"
     type="application/rss+xml"
