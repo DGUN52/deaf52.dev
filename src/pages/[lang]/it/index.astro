@@ -69,9 +69,7 @@ posts.forEach(p => {
               <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                 {post.data.title}
               </a>
-              <span class="tags">
-                {post.data.tech.map((t) => <span class="tag-pill">{t}</span>)}
-              </span>
+              <span class="tags">{post.data.tech.join(' · ')}</span>
             </li>
           ))}
         </ul>

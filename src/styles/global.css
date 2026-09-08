@@ -382,9 +382,11 @@ button:focus-visible {
 
 .post-list.it li {
   display: grid;
-  grid-template-columns: 2.4rem 1fr auto;
+  /* index(고정) / 제목(넘치면 말줄임 - minmax(0,1fr) 필수). 태그는 다음 줄 전체를 씀 */
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.3rem;
   align-items: baseline;
-  gap: 0.75rem;
   padding: 0.7rem 0;
   border-bottom: 1px dashed var(--line);
 }
@@ -395,6 +397,10 @@ button:focus-visible {
 }
 
 .post-list.it a {
+  min-width: 0; /* grid item이 내용물(긴 텍스트) 때문에 칼럼 밖으로 밀려나지 않도록 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* 제목은 한 줄로 유지하고 넘치면 말줄임 */
   text-decoration: none;
   font-family: var(--font-sans);
   font-weight: 500;
@@ -406,19 +412,10 @@ button:focus-visible {
 }
 
 .post-list.it .tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.tag-pill {
-  display: inline-block;
-  background: var(--tech-soft);
-  color: var(--tech);
-  border-radius: 999px;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.72rem;
-  white-space: nowrap;
+  grid-column: 2; /* 제목과 같은 칼럼에서 시작 - index 칼럼과 정렬 맞춤 */
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  white-space: normal; /* 태그가 많으면 이 줄 안에서 자연스럽게 줄바꿈 */
 }
 
 /* ---------- Humanities post list: manuscript style ---------- */
@@ -880,10 +877,11 @@ button:focus-visible {
 
 @media (max-width: 560px) {
   .post-list.it li {
-    grid-template-columns: 2rem 1fr;
+    /* index 칼럼 폭만 좁은 화면에 맞게 살짝 축소 */
+    grid-template-columns: 2rem minmax(0, 1fr);
   }
-  .post-list.it .tags {
-    grid-column: 2 / -1;
+  .post-list.it a {
+    white-space: normal; /* 좁은 화면에서는 말줄임 대신 줄바꿈 허용 */
   }
   .post-title {
     font-size: 1.5rem;
@@ -1255,10 +1253,6 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
   font-size: 0.72rem;
   color: var(--ink-soft);
   white-space: nowrap;
-}
-
-.post-list.it li {
-  flex-wrap: wrap;
 }
 
 .post-list.humanities li {
