@@ -616,6 +616,10 @@ button:focus-visible {
 
 .post-body img {
   max-width: 100%;
+  height: auto; /* <img>에 CLS 방지용 width/height 속성이 고정 px로 박혀있어(remark-responsive-images.mjs),
+                   이게 없으면 가로만 max-width로 줄어들고 세로는 속성값 그대로 유지되어 화면 폭을 줄일 때
+                   비율이 깨진다. width/height 속성은 그대로 두고 브라우저가 그 값으로 aspect-ratio를
+                   계산해 세로를 가로에 맞춰 자동으로 따라가게 한다. */
   border-radius: 6px;
   margin: 1rem 0;
 }
