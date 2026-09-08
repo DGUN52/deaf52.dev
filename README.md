@@ -36,7 +36,7 @@ npm install
 npm run dev
 ```
 
-콘텐츠 레포의 글을 로컬에서 보려면 `src/content/it/`, `src/content/humanities/` 안에 content 레포의 `it/`, `humanities/` 폴더 내용을 복사해 넣어야 합니다 (배포 시엔 빌드 스크립트가 자동으로 처리).
+콘텐츠 레포의 글/이미지를 로컬에서 보려면 `src/content/it/`, `src/content/humanities/`, `public/images/` 안에 content 레포의 `it/`, `humanities/`, `public/images/` 폴더 내용을 복사해 넣어야 합니다 (배포 시엔 아래 Build command가 자동으로 처리).
 
 `npm run build`는 Astro 정적 빌드 후 [Pagefind](https://pagefind.app)로 검색 인덱스까지 함께 생성합니다.
 
@@ -46,9 +46,13 @@ npm run dev
 
 - **Build command**:
   ```
-  git clone https://x-access-token:$CONTENT_REPO_TOKEN@github.com/DGUN52/deaf52.dev-content.git tmp-content && cp -r tmp-content/it src/content/it && cp -r tmp-content/humanities src/content/humanities && npm run build
+  git clone https://x-access-token:$CONTENT_REPO_TOKEN@github.com/DGUN52/deaf52.dev-content.git tmp-content && rm -rf src/content/it src/content/humanities public/images && cp -r tmp-content/it src/content/it && cp -r tmp-content/humanities src/content/humanities && mkdir -p public/images && cp -r tmp-content/public/images/. public/images/ && npm run build
   ```
   (`CONTENT_REPO_TOKEN`은 Cloudflare Pages 설정의 Secret 환경변수로 등록된 GitHub Fine-grained token, content 레포에 대한 Contents: Read-only 권한)
+
+  매 배포마다 `src/content/it`, `src/content/humanities`, `public/images`를 완전히 지우고 content 레포의 최신 상태(글 텍스트 + `public/images/`에 있는 원본 이미지, 그리고 아래에서 설명하는 `public/images/responsive/`·`responsive-manifest.json`)로 통째로 교체한 뒤 빌드합니다. 즉 로컬 `main` 레포의 `public/images`에 무엇이 남아있든 프로덕션 빌드와는 무관하며, 이미지 관련 상태는 항상 content 레포가 유일한 원본(source of truth)입니다.
+
+  **반응형 이미지(srcset)는 빌드 시점이 아니라 content 레포에 미리 생성해 커밋해 둡니다.** `utility/responsive_image_maker/generate_responsive_images.py`(content 레포)가 `public/images/`의 각 WebP 원본마다 400px/800px/1600px variant를 `public/images/responsive/`에 만들고 `public/images/responsive-manifest.json`에 기록합니다. 이미 처리된 원본은 재실행 시 건너뛰므로, 새 글을 쓰거나 이미지를 추가/교체했을 때만 다시 실행해서 늘어난 만큼만 커밋하면 됩니다(매 배포마다 전체를 다시 리사이즈하지 않음 — git alias로 쉽게 실행하는 방법은 아래 "콘텐츠 작업 도구" 참고). main 레포의 remark 플러그인(`src/remark-responsive-images.mjs`)이 이 매니페스트를 읽어 마크다운 이미지를 srcset 있는 `<img>`로 바꿔주고, 매니페스트에 없는 이미지는 기존 방식(단순 `<img>`)으로 자동 폴백됩니다.
 - **Deploy command**: `npx wrangler deploy`
 - `wrangler.jsonc`에 정적 파일(`dist/`)을 Worker의 assets로 서빙하도록 설정되어 있고, 방문자/글별 카운터 및 아래 API들(`worker/index.js`)이 같이 배포됩니다.
 
@@ -97,12 +101,38 @@ Cloudflare KV(`COUNTERS` 네임스페이스)를 이용해 방문자 수, 글별 
 - **벨로그 마이그레이션**: 벨로그 GraphQL API로 글을 긁어와 마크다운으로 변환하는 스크립트 (별도 관리)
 - **자동 번역**: `translate/translate.mjs` — Gemini API로 한국어 글을 8개 언어로 자동 번역해 content 레포에 채워 넣음. 사용법은 `translate/README.md` 참고.
 - **번역 slug 정리**: `check-translation-keys.js` — 언어별 파일명이 한국어 기준과 어긋나는 경우(키 불일치, 파일명 다름, 고아 파일, 중복) 점검. `rename-slugs-to-match-ko.js` — 점검된 결과를 한국어 slug 기준으로 일괄 리네이밍(기본 dry-run, `--apply`로 실행). 둘 다 content 레포에서 사용.
+- **이미지 최적화 & 반응형 이미지(srcset) 생성**: `utility/responsive_image_maker/`(content 레포)에 있는 두 스크립트로 처리합니다.
+  - `optimize_images.py` — PNG/JPG 원본을 WebP로 변환·리사이즈(긴 변 1600px 상한)하고 content 레포 전체 `.md`의 이미지 링크를 갱신.
+  - `generate_responsive_images.py` — `public/images/`의 WebP 원본마다 400px/800px/1600px variant를 `public/images/responsive/`에 만들고 `public/images/responsive-manifest.json`에 기록. 이미 처리된 원본은 자동으로 건너뛰므로 늘어난 이미지만큼만 새로 생성됩니다.
+
+  새 글을 쓰거나 이미지를 추가/교체했을 때, content 레포 루트에서 아래 git alias로 실행합니다(둘 다 `--apply` 전에 dry-run으로 먼저 확인 권장):
+  ```bash
+  git process-images-dry   # 두 스크립트를 순서대로 dry-run (미리보기)
+  git process-images       # 실제 적용 (optimize_images.py --apply && generate_responsive_images.py --apply)
+
+  # 반응형 variant만 다시 만들고 싶을 때 (예: PNG/JPG 변환은 필요 없고 srcset만 갱신)
+  git responsive-images-dry
+  git responsive-images
+
+  git alias                # 등록된 git alias 이름 목록 확인
+  ```
+  이 alias들은 `.git/config`에 로컬로 등록되어 있어 컴퓨터마다 한 번씩 등록해야 합니다:
+  ```bash
+  git config alias.responsive-images '!python3 utility/responsive_image_maker/generate_responsive_images.py --images-dir public/images --apply'
+  git config alias.responsive-images-dry '!python3 utility/responsive_image_maker/generate_responsive_images.py --images-dir public/images --dry-run'
+  git config alias.process-images '!python3 utility/responsive_image_maker/optimize_images.py --images-dir public/images --content-dir . --apply && python3 utility/responsive_image_maker/generate_responsive_images.py --images-dir public/images --apply'
+  git config alias.process-images-dry '!python3 utility/responsive_image_maker/optimize_images.py --images-dir public/images --content-dir . --dry-run && echo --- && python3 utility/responsive_image_maker/generate_responsive_images.py --images-dir public/images --dry-run'
+  git config alias.alias '!git config --get-regexp "^alias\." | sed "s/^alias\.//" | cut -d" " -f1 | sort'
+  ```
+  실행 후 생긴 변경사항(`public/images/responsive/`, `responsive-manifest.json`, 그리고 `optimize_images.py`가 만든 신규 `.webp`/`images-backup-original/`)을 content 레포에 커밋/푸시하면, 다음 배포 시 Build command가 그대로 main 쪽 `public/images`에 복사해 가져갑니다(빌드 시점에 재생성하지 않음).
 
 ## 다음 단계 후보
 
 - 인문학 카테고리 콘텐츠 채우기
-- Cloudflare Access로 `/ko/admin/*` 보호 설정
-- 카테고리 목록 페이지(`/{lang}/it/`, `/{lang}/humanities/`)의 `<meta description>`·title이 언어/카테고리 무관하게 고정값으로 나오는 문제 — 언어별로 고유하게 채워지도록 수정 필요
 - 실제 트래픽 확보 후 CMP를 광고 동의(`ad_*`) 신호까지 확장하고 Google AdSense 신청
-- www → non-www 리다이렉트, 국내 후원 수단(카카오페이/토스) 추가, 언어 자동 감지
+- www → non-www 리다이렉트 (선택 정리 항목: canonical 태그로 SEO 중복은 이미 방지되고 있어 급하지 않음. 다만 `www.deaf52.dev`도 리다이렉트 없이 그대로 200으로 응답 중이라, Cloudflare에서 Redirect Rules로 non-www 하나로 통일해두면 링크 공유·캐시 정책 관리가 깔끔해짐)
+- 국내 후원 수단(카카오페이/토스) 추가 — 도입 검토 중
 - 댓글: [giscus](https://giscus.app) — GitHub Discussions 기반, 무료
+
+**보류/비채택으로 결정한 항목**
+- 언어 자동 감지(브라우저 Accept-Language 기반 리다이렉트) — SEO에 악영향 줄 수 있다고 판단해 도입하지 않기로 함 (검색엔진 크롤러가 언어별 URL을 각각 색인하지 못하고 리다이렉트만 타게 될 위험)
