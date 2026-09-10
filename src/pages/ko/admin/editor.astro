@@ -353,15 +353,28 @@ import '../../../styles/global.css';
     padding: 0.75rem;
     border: 1px solid var(--line);
     border-radius: 4px;
+    /* 미리보기(.editor-preview)와 스크롤이 따로 놀도록, 여기도 높이를 화면 기준으로 고정하고
+       내부에서만 스크롤되게 한다 - resize:vertical로 늘려도 그 늘어난 높이가 상한이 되어
+       늘어난 만큼만 더 스크롤된다 (본문 전체가 늘어나며 페이지 자체가 길어지는 것을 막음). */
     resize: vertical;
-    height: 100%;
+    height: calc(100vh - 420px);
     min-height: 460px;
+    max-height: 80vh;
+    overflow-y: auto;
     box-sizing: border-box;
   }
 
   @media (max-width: 860px) {
     .editor-body-split {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* 모바일에선 편집창+미리보기가 세로로 쌓이므로, 데스크톱 기준 calc(100vh - 420px)를
+       그대로 쓰면 위아래로 화면을 꽉 채워 스크롤이 과하게 길어진다. 고정값으로 낮춘다. */
+    .editor-body-field textarea,
+    .editor-preview {
+      height: 50vh;
+      max-height: 50vh;
     }
   }
 
@@ -578,7 +591,12 @@ import '../../../styles/global.css';
     padding: 1rem 1.25rem;
     border: 1px solid var(--line);
     border-radius: 4px;
+    /* 편집창(textarea)과 같은 방식으로 높이를 고정해서 독립 스크롤로 만든다.
+       기존엔 min-height만 있고 상한이 없어 내용이 길어지면 미리보기 자체가 늘어나며
+       페이지 스크롤에 편입됐다 - 이제 편집창 높이와 맞춰 둘 다 자기 영역 안에서만 스크롤된다. */
+    height: calc(100vh - 420px);
     min-height: 460px;
+    max-height: 80vh;
     min-width: 0;
     max-width: 100%;
     overflow-wrap: break-word;
