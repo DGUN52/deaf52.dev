@@ -36,6 +36,22 @@ export const LOCALE_HREFLANG: Record<Locale, string> = {
   tw: 'zh-Hant',
 };
 
+// 텍스트 방향(<html dir=...>). il(히브리어)만 RTL이고 나머지는 전부 LTR.
+// 이게 없으면 브라우저가 기본값(ltr)으로 렌더링해서, 히브리어 페이지인데도
+// 좌우 정렬이 다른 언어와 똑같이 나온다 - "언어별 좌우정렬이 다르다"는
+// 증상은 사실 이 속성 누락으로 히브리어만 잘못 렌더링되고 있었던 것.
+export const LOCALE_DIR: Record<Locale, 'ltr' | 'rtl'> = {
+  ko: 'ltr',
+  en: 'ltr',
+  ja: 'ltr',
+  zh: 'ltr',
+  in: 'ltr',
+  de: 'ltr',
+  uk: 'ltr',
+  il: 'rtl',
+  tw: 'ltr',
+};
+
 // 글 slug 앞에 붙는 언어 폴더명(ko/, en/, ja/ 등)을 잘라내기 위한 공용 정규식.
 // 새 언어가 추가되면 LOCALES 배열만 바꾸면 여기도 자동으로 반영된다.
 export const LOCALE_PREFIX_RE = new RegExp(`^(${LOCALES.join('|')})/`);

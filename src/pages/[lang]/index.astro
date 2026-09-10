@@ -79,7 +79,7 @@ for (const p of humanitiesPosts) {
 
     {itPosts.length === 0 && <p class="empty-state">{t.empty}</p>}
     <ul class="post-list it">
-      {itPosts.map((post, i) => (
+      {itPosts.slice(0, 5).map((post, i) => (
         <li>
           <span class="index">{String(i + 1).padStart(2, '0')}</span>
           <a href={`/${lang}/it/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
@@ -100,7 +100,7 @@ for (const p of humanitiesPosts) {
 
     {humanitiesPosts.length === 0 && <p class="empty-state">{t.empty}</p>}
     <ul class="post-list humanities">
-      {humanitiesPosts.map((post) => (
+      {humanitiesPosts.slice(0, 5).map((post) => (
         <li>
           <span class="eyebrow">{subcategoryLabel[post.data.subcategory]}</span>
           <a href={`/${lang}/humanities/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
