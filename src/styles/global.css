@@ -670,6 +670,12 @@ button:focus-visible {
 }
 
 .post-body img {
+  display: block; /* 기본값 inline 때문에 blockquote 안에서 "이미지 줄 다음 줄에 캡션"처럼
+                      마크다운을 써도(예: "> ![alt](...)" 다음 줄에 "> 캡션") 그 둘이 remark에서
+                      하나의 <p> 안 인라인 콘텐츠로 합쳐지면서 이미지 오른쪽에 캡션 텍스트가
+                      나란히 붙어버리는 문제가 있었다(에디터의 marked.js 미리보기와 실제 Astro
+                      빌드의 remark 렌더링이 이 지점에서 다르게 보였던 이유). block으로 바꾸면
+                      이미지 뒤에 항상 줄바꿈이 강제되어 캡션이 아래 줄로 내려간다. */
   max-width: 100%;
   height: auto; /* <img>에 CLS 방지용 width/height 속성이 고정 px로 박혀있어(remark-responsive-images.mjs),
                    이게 없으면 가로만 max-width로 줄어들고 세로는 속성값 그대로 유지되어 화면 폭을 줄일 때
@@ -698,6 +704,18 @@ button:focus-visible {
 }
 
 .post-body th {
+  background: var(--paper-deep);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+/* 표의 좌측 열도 제목열처럼 보이게 하는 용도.
+   마크다운 GFM 테이블 문법은 첫 "행"만 <th>로 렌더링하고 첫 "열"을 <th>로
+   만드는 문법이 따로 없다 - 그래서 마크다운에서 첫 칸을 **볼드**로 쓰면
+   <td><strong>...</strong></td>가 되는데, 그 td를 골라서 th와 비슷한
+   배경/폰트를 입혀 시각적으로 제목열처럼 보이게 만든다.
+   사용법: 표에서 좌측 열로 만들고 싶은 칸을 **볼드**로 작성하면 된다. */
+.post-body td:first-child:has(> strong:only-child) {
   background: var(--paper-deep);
   font-family: var(--font-mono);
   font-size: 0.8rem;
