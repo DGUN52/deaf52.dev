@@ -585,11 +585,20 @@ button:focus-visible {
 }
 
 /* ---------- Inline code ---------- */
+/* 예전엔 --tech-soft(차가운 파란 배경) + --tech(파란 글씨)였는데, 사이트 배경(--paper,
+   따뜻한 종이색)과 색온도가 어긋나서 "알약처럼 튄다"고 느껴질 수 있었다. 그렇다고
+   배경을 종이색에 가깝게 낮추면(--paper-deep 시도) 이번엔 반대로 배경과 대비가
+   약해져서 가시성이 떨어진다 - 노션의 인라인 코드가 잘 보이는 이유는 튀지 않아서가
+   아니라 배경/글자 대비가 뚜렷하기 때문. 그래서 사이트 팔레트 안에 이미 있는
+   --human/--human-soft(따뜻한 버건디 계열이라 종이색과 색온도는 맞으면서도 배경과는
+   확실히 대비되는 조합, 노션의 연한 핑크 배경+진한 레드 글씨 조합과 유사)로 바꿔서
+   색온도는 맞추고 대비는 유지했다. */
 .post-body :not(pre) > code {
   font-family: var(--font-mono);
   font-size: 0.88em;
-  background: var(--tech-soft);
-  color: var(--tech);
+  font-weight: 500;
+  background: var(--human-soft);
+  color: var(--human);
   padding: 0.15em 0.4em;
   border-radius: 4px;
   word-break: break-word;
