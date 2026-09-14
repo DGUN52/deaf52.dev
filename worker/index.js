@@ -201,9 +201,15 @@ export default {
     // .md 파일을 직접 다운로드해서 로컬 content 폴더에 옮기고 git commit/push하는 방식.
     // env.GITHUB_READ_TOKEN: content 저장소에 대한 Contents:Read-only 권한의
     // GitHub Fine-grained token (Worker Secret으로 별도 등록 필요, 빌드용 CONTENT_REPO_TOKEN과는 별개).
+    // env.CONTENT_REPO: "owner/repo" 형식의 콘텐츠 저장소 이름 (wrangler.jsonc의 vars로 설정,
+    // src/site.config.ts의 contentRepo와 동일한 값이어야 함 - Worker는 그 파일을 import할 수 없어
+    // 별도 전달받는다).
     if (url.pathname === '/api/editor/posts' && request.method === 'GET') {
       if (!env.GITHUB_READ_TOKEN) {
         return json({ error: 'GITHUB_READ_TOKEN이 설정되지 않았습니다.' }, 500);
+      }
+      if (!env.CONTENT_REPO) {
+        return json({ error: 'CONTENT_REPO가 설정되지 않았습니다 (wrangler.jsonc의 vars 확인).' }, 500);
       }
 
       const category = url.searchParams.get('category');
@@ -213,7 +219,7 @@ export default {
         return json({ error: 'category는 it 또는 humanities여야 합니다.' }, 400);
       }
 
-      const REPO = 'DGUN52/deaf52.dev-content';
+      const REPO = env.CONTENT_REPO;
 
       // slug가 있으면 해당 글(ko 원본) 내용을 읽어서 반환
       if (slug) {
@@ -266,7 +272,10 @@ export default {
       if (!env.GITHUB_READ_TOKEN) {
         return json({ error: 'GITHUB_READ_TOKEN이 설정되지 않았습니다.' }, 500);
       }
-      const REPO = 'DGUN52/deaf52.dev-content';
+      if (!env.CONTENT_REPO) {
+        return json({ error: 'CONTENT_REPO가 설정되지 않았습니다 (wrangler.jsonc의 vars 확인).' }, 500);
+      }
+      const REPO = env.CONTENT_REPO;
       const res = await fetch(`https://api.github.com/repos/${REPO}/contents/public/images`, {
         headers: {
           Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
@@ -298,7 +307,10 @@ export default {
       if (!env.GITHUB_READ_TOKEN) {
         return json({ error: 'GITHUB_READ_TOKEN이 설정되지 않았습니다.' }, 500);
       }
-      const REPO = 'DGUN52/deaf52.dev-content';
+      if (!env.CONTENT_REPO) {
+        return json({ error: 'CONTENT_REPO가 설정되지 않았습니다 (wrangler.jsonc의 vars 확인).' }, 500);
+      }
+      const REPO = env.CONTENT_REPO;
       const listRes = await fetch(`https://api.github.com/repos/${REPO}/contents/it/ko`, {
         headers: {
           Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,

@@ -2,14 +2,15 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import remarkResponsiveImages from './src/remark-responsive-images.mjs';
+import { siteConfig } from './src/site.config.ts';
 
 export default defineConfig({
-  site: 'https://deaf52.dev',
+  site: siteConfig.siteUrl,
   integrations: [
     mdx(),
     sitemap({
       // 404 페이지와 루트 리다이렉트 전용 페이지(<html> 태그 없음)는 사이트맵에서 제외
-      filter: (page) => !page.includes('/404') && page !== 'https://deaf52.dev/',
+      filter: (page) => !page.includes('/404') && page !== `${siteConfig.siteUrl}/`,
     }),
   ],
   markdown: {

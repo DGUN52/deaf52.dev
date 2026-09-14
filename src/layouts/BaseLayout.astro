@@ -5,6 +5,7 @@ import SearchBox from '../components/SearchBox.astro';
 import PopularSidebar from '../components/PopularSidebar.astro';
 import { LOCALES, LOCALE_HREFLANG, LOCALE_DIR, type Locale } from '../i18n/utils';
 import CookieConsentBanner from '../components/CookieConsentBanner.astro';
+import { siteConfig } from '../site.config';
 
 interface Props {
   title: string;
@@ -37,7 +38,7 @@ interface Props {
 }
 const {
   title,
-  description = 'deaf52 · IT & humanities',
+  description = `${siteConfig.siteName} · ${siteConfig.siteSubtitle}`,
   availableLangs,
   slugOverrides,
   showSidebar = false,
@@ -58,7 +59,7 @@ const restOfPath = currentPath.replace(/^\/[a-z-]+/, '') || '/';
 const effectiveHreflangPaths: Partial<Record<Locale, string>> =
   hreflangPaths ?? Object.fromEntries(LOCALES.map((l) => [l, `/${l}${restOfPath}`]));
 
-const siteOrigin = (Astro.site?.origin ?? 'https://deaf52.dev').replace(/\/$/, '');
+const siteOrigin = (Astro.site?.origin ?? siteConfig.siteUrl).replace(/\/$/, '');
 const hreflangEntries = Object.entries(effectiveHreflangPaths) as Array<[Locale, string]>;
 
 // OpenGraph/Twitter Card: 카카오톡·슬랙·트위터 등에 링크를 공유했을 때 미리보기 카드에 쓰인다.
@@ -74,11 +75,14 @@ const canonicalUrl = `${siteOrigin}${currentPath}`;
 // GTM 자체를 아예 로드하지 않으므로 dataLayer.push는 계속 안전하게 no-op으로 남는다
 // (CookieConsentBanner 등 다른 곳의 push 호출들이 에러 없이 무시됨).
 const isDev = import.meta.env.DEV;
+// GTM을 쓰지 않는 포크(siteConfig.gtmId를 빈 문자열로 둔 경우)에서는 Consent Mode/GTM
+// 스크립트 블록 자체를 전부 건너뛴다.
+const gtmEnabled = !isDev && siteConfig.gtmId !== '';
 ---
 <!doctype html>
 <html lang={LOCALE_HREFLANG[currentLang]} dir={LOCALE_DIR[currentLang]}>
 <head>
-  {!isDev && (
+  {gtmEnabled && (
     <>
       <!-- Consent Mode: GTM/GA4 태그가 로드되기 전에 지역별 기본값을 먼저 세팅.
            window.__CF_COUNTRY__는 worker/index.js가 Cloudflare의 request.cf.country를
@@ -130,7 +134,7 @@ const isDev = import.meta.env.DEV;
            "페이지뷰" 자체가 누락될 걱정은 크지 않다(GA4 세션 시작 이벤트는 3초 이내
            로드된 gtag가 여전히 잡아낸다). 다만 3초 이전에 페이지를 완전히 벗어나는
            극단적으로 짧은 체류는 잡히지 않을 수 있음 - 성능 개선과의 트레이드오프. -->
-      <script is:inline>
+      <script is:inline define:vars={{ gtmId: siteConfig.gtmId }}>
         function loadGTM() {
           if (window.__gtmLoaded) return;
           window.__gtmLoaded = true;
@@ -138,7 +142,7 @@ const isDev = import.meta.env.DEV;
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
           j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-          })(window,document,'script','dataLayer','GTM-TFW86BDB');
+          })(window,document,'script','dataLayer',gtmId);
         }
         var INTERACTION_EVENTS = ['scroll', 'mousemove', 'keydown', 'touchstart', 'pointerdown'];
         function onFirstInteraction() {
@@ -161,14 +165,14 @@ const isDev = import.meta.env.DEV;
   )}
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{title} · deaf52</title>
+  <title>{title} · {siteConfig.siteName}</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalUrl} />
   <!-- OpenGraph / Twitter Card: 카카오톡, 슬랙, 트위터(X), 페이스북 등에 링크 공유 시 미리보기 카드 생성.
        og:image가 없는 페이지가 없도록 ogImageAbs에서 이미 기본 이미지로 폴백 처리됨. -->
   <meta property="og:type" content={ogType} />
-  <meta property="og:site_name" content="deaf52" />
+  <meta property="og:site_name" content={siteConfig.siteName} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={canonicalUrl} />
@@ -265,7 +269,7 @@ const isDev = import.meta.env.DEV;
   <link
     rel="alternate"
     type="application/rss+xml"
-    title={`deaf52 (${currentLang})`}
+    title={`${siteConfig.siteName} (${currentLang})`}
     href={`/${currentLang}/rss.xml`}
   />
   <!-- hreflang: 같은 콘텐츠의 언어별 버전을 검색엔진에 알려주는 태그.
@@ -281,11 +285,11 @@ const isDev = import.meta.env.DEV;
   )}
 </head>
 <body>
-  {!isDev && (
+  {gtmEnabled && (
     <>
       <!-- Google Tag Manager (noscript) -->
       <noscript>
-        <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TFW86BDB" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+        <iframe src={`https://www.googletagmanager.com/ns.html?id=${siteConfig.gtmId}`} height="0" width="0" style="display:none;visibility:hidden"></iframe>
       </noscript>
       <!-- End Google Tag Manager (noscript) -->
     </>
@@ -293,8 +297,8 @@ const isDev = import.meta.env.DEV;
   <CookieConsentBanner lang={currentLang} />
   <header class="site-header">
     <a href={`/${currentLang}/`} class="site-title-group">
-      <span class="site-title">deaf52</span>
-      <span class="site-subtitle">IT &amp; humanities</span>
+      <span class="site-title">{siteConfig.siteName}</span>
+      <span class="site-subtitle">{siteConfig.siteSubtitle}</span>
     </a>
     <nav class="site-nav">
       <HeaderLangSwitcher
@@ -325,16 +329,20 @@ const isDev = import.meta.env.DEV;
 
   <footer class="site-footer">
     <p>
-      &copy; 2026 deaf52.dev &middot; <a href="mailto:deaf525252@gmail.com">deaf525252@gmail.com</a>
+      &copy; {siteConfig.copyrightYear} {siteConfig.siteUrl.replace(/^https?:\/\//, '')} &middot; <a href={`mailto:${siteConfig.contactEmail}`}>{siteConfig.contactEmail}</a>
       &middot; <a href={`/${currentLang}/rss.xml`}>RSS</a>
       &middot; <a href={`/${currentLang}/privacy/`}>{currentLang === 'ko' ? '개인정보처리방침' : 'Privacy Policy'}</a>
-      &middot; <a
-        href="https://ko-fi.com/B1L125QQRV"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="kofi-link"
-        onclick="window.dataLayer && window.dataLayer.push({event: 'kofi_click'})"
-      >☕ buy me a coffee</a>
+      {siteConfig.kofiUrl !== '' && (
+        <>
+          &middot; <a
+            href={siteConfig.kofiUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="kofi-link"
+            onclick="window.dataLayer && window.dataLayer.push({event: 'kofi_click'})"
+          >☕ buy me a coffee</a>
+        </>
+      )}
       &middot; <span id="site-visit-counter">방문자수 불러오는 중...</span>
     </p>
   </footer>
