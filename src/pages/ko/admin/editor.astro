@@ -694,6 +694,14 @@ import '../../../styles/global.css';
     font-size: 0.8rem;
   }
 
+  /* 실제 사이트(global.css)의 표 좌측 제목열 스타일과 동일 규칙.
+     표에서 좌측 열로 만들고 싶은 칸을 **볼드**로 쓰면 이 스타일이 적용된다. */
+  .editor-preview td:first-child:has(> strong:only-child) {
+    background: var(--paper-deep);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
   .editor-preview a {
     color: var(--tech);
     text-decoration-color: var(--line);
