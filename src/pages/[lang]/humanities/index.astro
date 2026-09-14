@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { LOCALES, LOCALE_PREFIX_RE } from '../../../i18n/utils';
-import { formatDate } from '../../../i18n/formatDate';
+import { formatDateShort } from '../../../i18n/formatDate';
 
 export function getStaticPaths() {
   return LOCALES.map((lang) => ({ params: { lang } }));
@@ -69,9 +69,10 @@ posts.forEach(p => {
       </div>
 
       <div id="view-latest" class="view-section">
-        <ul class="post-list humanities">
+        <ul class="post-list humanities has-dates">
           {posts.map((post) => (
             <li>
+              <span class="index">{formatDateShort(post.data.publishedAt)}</span>
               <a href={`/${lang}/humanities/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                 {post.data.title}
               </a>
@@ -85,13 +86,13 @@ posts.forEach(p => {
         {[...groupedPosts.entries()].map(([sub, subPosts]) => (
           <div>
             <h3 class="group-title">{subcategoryLabel[sub]}</h3>
-            <ul class="post-list humanities">
+            <ul class="post-list humanities has-dates">
               {subPosts.map((post) => (
                 <li>
+                  <span class="index">{formatDateShort(post.data.publishedAt)}</span>
                   <a href={`/${lang}/humanities/${post.slug.replace(LOCALE_PREFIX_RE, '')}`}>
                     {post.data.title}
                   </a>
-                  <span class="tags">{formatDate(post.data.publishedAt, post.data.lang)}</span>
                 </li>
               ))}
             </ul>
