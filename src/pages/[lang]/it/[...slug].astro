@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import TranslationReport from '../../../components/TranslationReport.astro';
 import TocSidebar from '../../../components/TocSidebar.astro';
+import PostCard from '../../../components/PostCard.astro';
 import { getTranslations, LOCALE_PREFIX_RE } from '../../../i18n/utils';
 import { formatDate } from '../../../i18n/formatDate';
 
@@ -15,6 +16,8 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+// MDX 본문에서 <PostCard slug="..." category="it" />를 쓸 수 있게 컴포넌트를
+// 주입한다. .md 글에는 아무 영향 없음(단순히 매핑을 안 쓸 뿐).
 const { Content, headings } = await entry.render();
 const cleanSlug = entry.slug.replace(LOCALE_PREFIX_RE, '');
 // 목차는 h1(장 제목)과 h2(소제목)를 대상으로 한다 - TocSidebar와 동일 기준.
@@ -54,7 +57,7 @@ const hreflangPaths = Object.fromEntries(
   </div>
   <TocSidebar headings={headings} variant="inline" lang={entry.data.lang} />
   <article class="post-body">
-    <Content />
+    <Content components={{ PostCard }} />
   </article>
   <TocSidebar slot="toc" headings={headings} variant="sidebar" lang={entry.data.lang} />
   <div class="like-bar">

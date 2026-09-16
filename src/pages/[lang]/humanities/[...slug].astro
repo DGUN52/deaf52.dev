@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import TranslationReport from '../../../components/TranslationReport.astro';
 import TocSidebar from '../../../components/TocSidebar.astro';
+import PostCard from '../../../components/PostCard.astro';
 import { getTranslations, LOCALE_PREFIX_RE } from '../../../i18n/utils';
 import { formatDate } from '../../../i18n/formatDate';
 
@@ -61,7 +62,7 @@ const subcategoryLabel: Record<string, string> = {
   </div>
   <TocSidebar headings={headings} variant="inline" lang={entry.data.lang} />
   <article class="post-body">
-    <Content />
+    <Content components={{ PostCard }} />
   </article>
   <TocSidebar slot="toc" headings={headings} variant="sidebar" lang={entry.data.lang} />
   <div class="like-bar">
