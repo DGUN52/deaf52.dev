@@ -241,9 +241,39 @@ export default {
         return json({ slug, category, content });
       }
 
-      // slug가 없으면 ko 폴더의 글 목록(파일명만)을 반환
+      // slug가 없으면 ko 폴더의 글 목록을 반환한다.
+      // 예전엔 파일명만 모아서 .sort()(알파벳순)로 반환했는데, 에디터의 "기존 글 불러오기"
+      // 셀렉트와 북마크 삽입 모달 둘 다 이 알파벳순 그대로를 썼다 - 최신 글을 찾기 불편했다.
+      // 이제는 각 .md 파일의 frontmatter(publishedAt, title)까지 같이 내려줘서
+      // 클라이언트가 최신순으로 보여줄 수 있게 한다.
+      //
+      // GitHub Contents API로 디렉토리를 조회하면 파일 목록(이름)만 오고 내용은 안 온다 -
+      // 정렬 기준이 되는 publishedAt을 얻으려면 파일마다 별도 요청이 필요하다(N개 파일 =
+      // N개 요청, 병렬화해도 요청 횟수 자체는 줄지 않음). 게다가 북마크 모달을 열 때마다,
+      // 글 내용이 바뀌지도 않았는데 매번 전체를 다시 훑는 건 낭비다 - content 레포는
+      // 관리자가 직접 글을 쓸 때만 바뀌고, 그 사이엔 목록이 그대로다.
+      // 그래서 KV(COUNTERS, 조회수 카운터와 같은 네임스페이스 재사용)에
+      // "editor-posts-cache:{category}" 키로 정렬된 결과를 캐싱해두고, 캐시가 있으면
+      // 무조건 그걸 쓴다 - 시간 기반 TTL은 두지 않는다. 이 캐시가 "오래됐는지"는
+      // 시간이 아니라 "글 내용이 실제로 바뀌었는지"로 판단해야 의미가 있는데, 그건
+      // 결국 관리자가 직접 push한 순간을 아는 것과 같다. 즉 TTL로 몇 분마다 자동으로
+      // 다시 확인해봐야 대부분은 "안 바뀜"이라 GitHub API만 낭비하고, 반대로 push한
+      // 지 1분 만에 바로 반영하고 싶어도 TTL이 남아있으면 못 본다 - 시간으로 캐시
+      // 신선도를 추정하는 게 애초에 안 맞는 경우. 그래서 무효화는 오직 관리자가
+      // "⟳ 목록 새로고침" 버튼을 눌러 보내는 ?refresh=1로만 한다(수동 무효화).
+      const cacheKey = `editor-posts-cache:${category}`;
+      const forceRefresh = url.searchParams.get('refresh') === '1';
+
+      if (!forceRefresh) {
+        const cachedRaw = await env.COUNTERS.get(cacheKey);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          return json({ category, items: cached.items, cached: true });
+        }
+      }
+
       const dirPath = `${category}/ko`;
-      const res = await fetch(
+      const dirRes = await fetch(
         `https://api.github.com/repos/${REPO}/contents/${dirPath}`,
         {
           headers: {
@@ -253,16 +283,67 @@ export default {
           },
         }
       );
-      if (!res.ok) {
-        return json({ error: `GitHub API 오류 (${res.status})` }, res.status === 404 ? 404 : 502);
+      if (!dirRes.ok) {
+        return json({ error: `GitHub API 오류 (${dirRes.status})` }, dirRes.status === 404 ? 404 : 502);
       }
-      const files = await res.json();
-      const items = (Array.isArray(files) ? files : [])
+      const files = await dirRes.json();
+      const slugs = (Array.isArray(files) ? files : [])
         .filter((f) => f.type === 'file' && f.name.endsWith('.md'))
-        .map((f) => f.name.replace(/\.md$/, ''))
-        .sort();
+        .map((f) => f.name.replace(/\.md$/, ''));
 
-      return json({ category, items });
+      // frontmatter에서 필요한 필드(title, publishedAt)만 뽑는 아주 단순한 파서.
+      // editor.astro의 parseFrontmatter()와 동일한 수준(중첩 YAML 등은 지원 안 함) -
+      // 이 프로젝트 frontmatter 스키마 정도만 다루면 충분하다.
+      function extractField(raw, field) {
+        const line = raw.split('\n').find((l) => l.startsWith(`${field}:`));
+        if (!line) return '';
+        return line.slice(field.length + 1).trim().replace(/^["']|["']$/g, '');
+      }
+
+      const items = await Promise.all(
+        slugs.map(async (slug) => {
+          try {
+            const fileRes = await fetch(
+              `https://api.github.com/repos/${REPO}/contents/${dirPath}/${slug}.md`,
+              {
+                headers: {
+                  Authorization: `Bearer ${env.GITHUB_READ_TOKEN}`,
+                  'User-Agent': 'deaf52-admin-editor',
+                  Accept: 'application/vnd.github.raw+json',
+                },
+              }
+            );
+            if (!fileRes.ok) return { slug, title: slug, publishedAt: null };
+            const raw = await fileRes.text();
+            return {
+              slug,
+              title: extractField(raw, 'title') || slug,
+              publishedAt: extractField(raw, 'publishedAt') || null,
+            };
+          } catch {
+            // 개별 파일 조회가 실패해도 나머지 목록은 계속 내려준다 - 이 글은 정렬 기준이
+            // 없는 것으로 취급해 맨 뒤로 보낸다(아래 정렬 로직).
+            return { slug, title: slug, publishedAt: null };
+          }
+        })
+      );
+
+      items.sort((a, b) => {
+        if (!a.publishedAt && !b.publishedAt) return a.slug.localeCompare(b.slug);
+        if (!a.publishedAt) return 1;
+        if (!b.publishedAt) return -1;
+        return new Date(b.publishedAt).valueOf() - new Date(a.publishedAt).valueOf();
+      });
+
+      // 다음 요청부터는 (관리자가 새로고침을 누르기 전까지) 위 캐시 히트 경로를 타도록
+      // KV에 저장. 시간 TTL이 없으므로 이 캐시는 ?refresh=1이 다시 올 때까지 계속 쓰인다.
+      try {
+        await env.COUNTERS.put(cacheKey, JSON.stringify({ items }));
+      } catch {
+        // 캐시 저장 실패는 무시 - 다음 요청이 다시 GitHub API를 타는 것으로 충분하다.
+      }
+
+      return json({ category, items, cached: false });
     }
 
     // ---------- 관리자: 이미지 목록 (content 저장소 public/images/) ----------
