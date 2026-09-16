@@ -308,8 +308,18 @@ const gtmEnabled = !isDev && siteConfig.gtmId !== '';
         slugOverrides={slugOverrides}
       />
       <SearchBox />
-      <a href={`/${currentLang}/it/`}>IT기술</a>
-      <a href={`/${currentLang}/humanities/`}>인문학</a>
+      <a
+        href={`/${currentLang}/it/`}
+        class:list={["nav-link", { active: currentPath.startsWith(`/${currentLang}/it`) }]}
+      >
+        IT기술
+      </a>
+      <a
+        href={`/${currentLang}/humanities/`}
+        class:list={["nav-link", { active: currentPath.startsWith(`/${currentLang}/humanities`) }]}
+      >
+        인문학
+      </a>
     </nav>
   </header>
 

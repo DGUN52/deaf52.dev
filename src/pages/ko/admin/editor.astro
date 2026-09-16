@@ -629,11 +629,16 @@ import '../../../styles/global.css';
     margin: 0 0 1.2rem;
   }
 
+  /* 실제 사이트(global.css의 .post-body :not(pre) > code)는 --tech-soft/--tech(차가운
+     파란색)에서 --human-soft/--human(버건디 계열, 종이 배경과 색온도가 맞음)로 바꿨는데,
+     이 미리보기 쪽은 그 변경이 반영 안 된 채 예전 파란색으로 남아있었다 - 미리보기와
+     실제 렌더링이 다르게 보이는 원인. 같은 값으로 맞춘다. */
   .editor-preview :not(pre) > code {
     font-family: var(--font-mono);
     font-size: 0.88em;
-    background: var(--tech-soft);
-    color: var(--tech);
+    font-weight: 500;
+    background: var(--human-soft);
+    color: var(--human);
     padding: 0.15em 0.4em;
     border-radius: 4px;
     word-break: break-word;
@@ -666,6 +671,22 @@ import '../../../styles/global.css';
     border-left: 3px solid var(--human);
     color: var(--ink-soft);
     font-style: italic;
+  }
+
+  /* 실제 사이트(global.css의 .post-body blockquote)와 같은 문제 - blockquote 안
+     마지막 자식의 margin-bottom이 남아있으면 border-left가 그 빈 공간까지 늘어져
+     보인다. 미리보기도 실제 사이트와 동일하게 보이는 게 목적이므로 같이 맞춘다. */
+  .editor-preview blockquote > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* 실제 사이트(global.css의 .post-body hr)와 동일 - 구분선(마크다운 ---)도
+     blockquote와 같은 --human(버건디) 계열로 통일. */
+  .editor-preview hr {
+    border: none;
+    border-top: 1px solid var(--human);
+    opacity: 0.4;
+    margin: 2.5rem 0;
   }
 
   .editor-preview ul,

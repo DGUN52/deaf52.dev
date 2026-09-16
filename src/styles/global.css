@@ -53,7 +53,11 @@ button:focus-visible {
   justify-content: space-between;
   gap: 1.5rem;
   padding: 2rem clamp(1.25rem, 4vw, 3rem) 1.25rem;
-  border-bottom: 1px solid var(--line);
+  /* 예전엔 --line(사이트 전반에 쓰는 옅은 회색 경계선)이었는데, blockquote/hr에 이미
+     쓰고 있는 --human(버건디) 포인트를 헤더에도 넣기로 해서 여기도 맞췄다.
+     blockquote의 border-left와 동일하게 풀컬러로 쓴다(1px라 두께 자체가 얇아서
+     따로 옅게 만들지 않아도 과하지 않음). */
+  border-bottom: 1px solid var(--human);
   flex-wrap: wrap;
 }
 
@@ -186,6 +190,21 @@ button:focus-visible {
 .site-nav a:hover {
   color: var(--ink);
   border-bottom-color: var(--ink);
+}
+
+/* IT기술/인문학 카테고리 링크만: hover와 "지금 이 카테고리 보고 있음" 표시를
+   버건디(--human)로. .site-nav a(위 규칙)는 언어 스위처 등 nav 안의 다른 링크에도
+   같이 적용되는 공용 규칙이라, 카테고리 링크만 건드리려면 별도로 좁혀야 한다 -
+   그래서 .nav-link 클래스로 범위를 한정하고, 이 규칙이 위 공용 hover 규칙보다
+   나중에 오게 해서 우선한다. */
+.site-nav a.nav-link:hover {
+  color: var(--human);
+  border-bottom-color: var(--human);
+}
+
+.site-nav a.nav-link.active {
+  color: var(--human);
+  border-bottom-color: var(--human);
 }
 
 /* ---------- Disabled Flag Box Style ---------- */
@@ -651,6 +670,27 @@ button:focus-visible {
   border-left: 3px solid var(--human);
   color: var(--ink-soft);
   font-style: italic;
+}
+
+/* blockquote 안에 문단/리스트가 여러 개 들어가면(리스트를 인용한 경우 등), 안쪽
+   마지막 요소가 원래 갖고 있던 margin-bottom(.post-body p는 1.2rem, ul/ol도 1.2rem)이
+   그대로 살아있어서 border-left가 그 margin 높이까지 따라 늘어나 보이는 문제가 있었다 -
+   텍스트는 이미 끝났는데 왼쪽 바만 그 아래 빈 공간까지 계속 그려지는 것처럼 보임.
+   blockquote 안 마지막 자식의 아래쪽 margin만 제거해서, 바의 길이가 실제 내용
+   높이와 맞아떨어지게 한다. */
+.post-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- 구분선 (마크다운 ---) ---------- */
+/* 별도 스타일이 없어서 브라우저 기본값(회색 3D 홈선)으로 나오고 있었다 - blockquote의
+   border-left와 같은 --human(버건디) 계열로 통일해서, 인용/구분선 둘 다 같은 강조색을
+   쓰는 것처럼 보이게 한다. */
+.post-body hr {
+  border: none;
+  border-top: 1px solid var(--human);
+  opacity: 0.4;
+  margin: 2.5rem 0;
 }
 
 .post-body ul,
@@ -1550,13 +1590,16 @@ body.report-picking .post-body :is(h1, h2, h3, p, li, pre, blockquote, td, th):h
 }
 
 .toc-list a:hover {
-  color: var(--tech);
+  color: var(--human);
 }
 
+/* 현재 읽고 있는 섹션 표시 - IntersectionObserver가 스크롤에 따라 이 클래스를 토글한다
+   ([...slug].astro 스크립트). 예전엔 --tech(파란색)였는데, 헤더/blockquote/hr에 이미
+   쓰고 있는 --human(버건디) 포인트로 통일했다. */
 .toc-list a.active {
-  color: var(--tech);
+  color: var(--human);
   font-weight: 600;
-  border-left-color: var(--tech);
+  border-left-color: var(--human);
 }
 
 /* 목차 계층 표시: h1(장 제목)은 기본 스타일, h2(소제목)는 들여쓰기 + 살짝 작은 글씨로
